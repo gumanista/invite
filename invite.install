@@ -1,0 +1,117 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function invite_schema() {
+  $schema = array();
+
+  $schema['invite'] = array(
+    'description' => 'The base table for invites.',
+    'fields' => array(
+      'iid' => array(
+        'description' => 'The primary identifier for the invite.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type (bundle) of this invite.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'mail' => array(
+        'type' => 'varchar',
+        'length' => 254,
+        'not null' => FALSE,
+        'default' => '',
+        'description' => "User's e-mail address.",
+      ),
+      'uid' => array(
+        'description' => 'ID of Drupal user creator.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'invitee' => array(
+        'description' => 'Drupal uid of the invitee upon registration.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the invite was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'expiry' => array(
+        'description' => 'The Unix timestamp when the invite will expire.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'joined' => array(
+        'description' => 'Will be filled with the time the invite was accepted upon registration.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'canceled' => array(
+        'description' => 'The Unix timestamp when the invite has been withdrawn.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+//      'subject' => array(
+//        'description' => 'The title of the invite.',
+//        'type' => 'varchar',
+//        'length' => 255,
+//        'not null' => TRUE,
+//        'default' => '',
+//      ),
+//      'message' => array(
+//        'description' => 'invite description.',
+//        'type' => 'text',
+//      ),
+    ),
+    'primary key' => array('iid'),
+  );
+
+  $schema['invite_type'] = array(
+    'description' => 'Stores information about all defined invite types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique invite type ID.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'description' => 'A brief description of this type.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'medium',
+        'translatable' => TRUE,
+      ),
+    ) + entity_exportable_schema_fields(),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
