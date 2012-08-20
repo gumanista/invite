@@ -22,13 +22,6 @@ function invite_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'mail' => array(
-        'type' => 'varchar',
-        'length' => 254,
-        'not null' => FALSE,
-        'default' => '',
-        'description' => "User's e-mail address.",
-      ),
       'uid' => array(
         'description' => 'ID of Drupal user creator.',
         'type' => 'int',
@@ -76,6 +69,15 @@ function invite_schema() {
 //      ),
     ),
     'primary key' => array('iid'),
+    'indexes' => array(
+      'invitee' => array('invitee'),
+    ),
+    'foreign keys' => array(
+      'user' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
   );
 
   $schema['invite_type'] = array(
@@ -114,4 +116,9 @@ function invite_schema() {
   );
 
   return $schema;
+}
+
+function invite_install() {
+  // Set default expiry time 30 days
+  variable_set('invite_default_expiry_time', 30 * 24 * 60 * 60);
 }

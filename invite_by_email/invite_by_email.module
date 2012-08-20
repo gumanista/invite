@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function invite_by_email_entity_info_alter(&$entity_info) {
+  dpm($entity_info);
+  foreach (invite_types() as $type => $info) {
+    $entity_info['invite']['bundles']['invite_by_email']['entity class'] = 'InviteByEmail';
+  }
+}
+
+/**
+ * Invite class.
+ */
+class InviteByEmail extends Invite {
+  protected function defaultLabel() {
+    $entity = entity_metadata_wrapper('invite', $this);
+    return '------------------';
+  }
+  protected function defaultUri() {
+    return array('path' => 'invite/' . $this->identifier());
+  }
+}
+
+

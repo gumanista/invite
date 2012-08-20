@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Implements hook_entity_info().
  */
@@ -8,7 +9,7 @@ function invite_entity_info() {
       'label' => t('Invite'),
       'entity class' => 'Invite',
       'controller class' => 'InviteController', // TODO: implement
-      'base table' => 'invite', // TODO: implement
+      'base table' => 'invite',
       'fieldable' => TRUE,
       'entity keys' => array(
         'id' => 'iid',
@@ -28,9 +29,10 @@ function invite_entity_info() {
       'label callback' => 'entity_class_label',
       'uri callback' => 'entity_class_uri',
       'module' => 'invite',
-      'access callback' => 'invite_access', // TODO: implement
+      'access callback' => 'invite_access',
     ),
   );
+
   $return['invite_type'] = array(
     'label' => t('Invite Type'),
     'entity class' => 'InviteType',
@@ -47,11 +49,11 @@ function invite_entity_info() {
     'module' => 'invite',
     // Enable the entity API's admin UI.
     'admin ui' => array(
-      'path' => 'admin/structure/invite-types', // TODO: implement
-      'file' => 'invite.admin.inc',  // TODO: implement
-      'controller class' => 'InviteTypeUIController', // TODO: implement
+      'path' => 'admin/structure/invite-types',
+      'file' => 'invite.admin.inc',
+      'controller class' => 'InviteTypeUIController',
     ),
-    'access callback' => 'invite_type_access',  // TODO: implement
+    'access callback' => 'invite_type_access',
   );
   return $return;
 }
@@ -87,7 +89,7 @@ function invite_menu() {
     'tab_root' => 'invite',
   );
 
-  $invite_uri = 'invites/%invite';
+  $invite_uri = 'invite/%invite';
   $invite_uri_argument_position = 1;
 
   $items[$invite_uri] = array(
@@ -102,7 +104,7 @@ function invite_menu() {
 
   $items[$invite_uri . '/view'] = array(
     'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_invite,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
 
@@ -124,7 +126,7 @@ function invite_menu() {
     'access callback' => 'entity_access',
     'access arguments' => array('edit', 'invite', $invite_uri_argument_position),
     'file' => 'invite.admin.inc',
-    'type' => MENU_LOCAL_invite,
+    'type' => MENU_LOCAL_TASK,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
 
@@ -153,7 +155,7 @@ function invite_menu() {
 }
 
 /**
- * Access callback for invite.
+ * Access callback for invite type.
  */
 function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
   global $user;
@@ -173,6 +175,14 @@ function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
         || (user_access('edit own invite entities') && ($invite->uid == $account->uid));
   }
 }
+
+/**
+ * Access callback for task Type.
+ */
+function invite_type_access($op, $entity = NULL) {
+  return user_access('administer invite types');
+}
+
 
 /**
  * Implements hook_permission().
@@ -209,91 +219,33 @@ function invite_permission() {
 }
 
 /**
- * Invite class.
+ * Implements hook_entity_property_info_alter().
  */
-class Invite extends Entity {
-  protected function defaultLabel() {
-    return $this->title;
-  }
-  protected function defaultUri() {
-    return array('path' => 'invite/' . $this->identifier());
-  }
-}
-
-class InviteController extends EntityAPIController {
-  public function create(array $values = array()) {
-    global $user;
-    $values += array(
-      'title' => '',
-      'description' => '',
-      'created' => REQUEST_TIME,
-      'changed' => REQUEST_TIME,
-      'uid' => $user->uid,
-    );
-    return parent::create($values);
-  }
-
-  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
-    $wrapper = entity_metadata_wrapper('invite', $entity);
-    $content['author'] = array('#markup' => t('Created by: !author', array('!author' => $wrapper->uid->name->value(array('sanitize' => TRUE)))));
-
-    // Make Description and Status themed like default fields.
-    $content['description'] = array(
-      '#theme' => 'field',
-      '#weight' => 0,
-      '#title' =>t('Description'),
-      '#access' => TRUE,
-      '#label_display' => 'above',
-      '#view_mode' => 'full',
-      '#language' => LANGUAGE_NONE,
-      '#field_name' => 'field_fake_description',
-      '#field_type' => 'text',
-      '#entity_type' => 'invite',
-      '#bundle' => $entity->type,
-      '#items' => array(array('value' => $entity->description)),
-      '#formatter' => 'text_default',
-      0 => array('#markup' => check_plain($entity->description))
-    );
-
-    return parent::buildContent($entity, $view_mode, $langcode, $content);
-  }
-}
-
-/**
- * Event Type class.
- */
-class InviteType extends Entity {
-  public $type;
-  public $label;
-  public $weight = 0;
-  public function __construct($values = array()) {
-    parent::__construct($values, 'invite_type');
-  }
-
-  function isLocked() {
-    return isset($this->status) && empty($this->is_new) && (($this->status & ENTITY_IN_CODE) || ($this->status & ENTITY_FIXED));
-  }
-}
-
-class InviteTypeController extends EntityAPIControllerExportable {
-  public function create(array $values = array()) {
-    $values += array(
-      'label' => '',
-      'description' => '',
-    );
-    return parent::create($values);
-  }
-
-  /**
-   * Save Invite Type.
-   */
-  public function save($entity, DatabaseTransaction $transaction = NULL) {
-    parent::save($entity, $transaction);
-    // Rebuild menu registry. We do not call menu_rebuild directly, but set
-    // variable that indicates rebuild in the end.
-    // @see _http://drupal.org/node/1399618
-    variable_set('menu_rebuild_needed', TRUE);
-  }
+function invite_entity_property_info_alter(&$info) {
+  $properties = &$info['invite']['properties'];
+  $properties['created'] = array(
+    'label' => t('Date created'),
+    'type' => 'date',
+    'description' => t('The date the invite was created.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer invite entities',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t('Date changed'),
+    'type' => 'date',
+    'schema field' => 'changed',
+    'description' => t('The date the node was most recently updated.'),
+  );
+  $properties['uid'] = array(
+    'label' => t('Author'),
+    'type' => 'user',
+    'description' => t('The author of the invite.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer invite entities',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  );
 }
 
 /**
@@ -335,6 +287,7 @@ function invite_delete_multiple($invite_ids) {
  * Load Invite Type.
  */
 function invite_type_load($invite_type) {
+  dpm(123);
   return invite_types($invite_type);
 }
 /**
@@ -356,7 +309,7 @@ function invite_type_save($invite_type) {
  * Delete single case type.
  */
 function invite_type_delete($invite_type) {
-  entity_delete('invite_type', entity_id('invite_type' ,$invite_type));
+  entity_delete('invite_type', entity_id('invite_type', $invite_type));
 }
 
 /**
@@ -364,34 +317,4 @@ function invite_type_delete($invite_type) {
  */
 function invite_type_delete_multiple($invite_type_ids) {
   entity_delete_multiple('invite_type', $invite_type_ids);
-}
-
-/**
- * Implements hook_entity_property_info_alter().
- */
-function invite_entity_property_info_alter(&$info) {
-  $properties = &$info['invite']['properties'];
-  $properties['created'] = array(
-    'label' => t("Date created"),
-    'type' => 'date',
-    'description' => t("The date the invite was created."),
-    'setter callback' => 'entity_property_verbatim_set',
-    'setter permission' => 'administer invite entities',
-    'schema field' => 'created',
-  );
-  $properties['changed'] = array(
-    'label' => t("Date changed"),
-    'type' => 'date',
-    'schema field' => 'changed',
-    'description' => t("The date the node was most recently updated."),
-  );
-  $properties['uid'] = array(
-    'label' => t("Author"),
-    'type' => 'user',
-    'description' => t("The author of the task."),
-    'setter callback' => 'entity_property_verbatim_set',
-    'setter permission' => 'administer invite entities',
-    'required' => TRUE,
-    'schema field' => 'uid',
-  );
 }

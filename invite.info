@@ -1,0 +1,9 @@
+name = Invite
+description = Allow users to invite others on site
+core = 7.x
+
+files[] = invite.module
+files[] = invite.controller.inc
+files[] = invite.pages.inc
+
+dependencies[] = entity
