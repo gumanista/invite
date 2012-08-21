@@ -15,6 +15,13 @@ function invite_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'reg_code' => array(
+        'description' => 'Stores the issued registration code and acts as primary identifier for a invite.',
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'type' => array(
         'description' => 'The type (bundle) of this invite.',
         'type' => 'varchar',

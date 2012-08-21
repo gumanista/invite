@@ -8,7 +8,7 @@ function invite_entity_info() {
     'invite' => array(
       'label' => t('Invite'),
       'entity class' => 'Invite',
-      'controller class' => 'InviteController', // TODO: implement
+      'controller class' => 'InviteController',
       'base table' => 'invite',
       'fieldable' => TRUE,
       'entity keys' => array(
@@ -19,7 +19,7 @@ function invite_entity_info() {
         'bundle' => 'type',
       ),
       'bundles' => array(),
-      'load hook' => 'invite_load', // TODO: implement
+      'load hook' => 'invite_load',
       'view modes' => array(
         'full' => array(
           'label' => t('Default'),
@@ -30,13 +30,14 @@ function invite_entity_info() {
       'uri callback' => 'entity_class_uri',
       'module' => 'invite',
       'access callback' => 'invite_access',
+      'metadata controller class' => 'InviteMetadataController',
     ),
   );
 
   $return['invite_type'] = array(
     'label' => t('Invite Type'),
     'entity class' => 'InviteType',
-    'controller class' => 'InviteTypeController', // TODO: implement
+    'controller class' => 'InviteTypeController',
     'base table' => 'invite_type',
     'fieldable' => FALSE,
     'bundle of' => 'invite',
@@ -50,7 +51,7 @@ function invite_entity_info() {
     // Enable the entity API's admin UI.
     'admin ui' => array(
       'path' => 'admin/structure/invite-types',
-      'file' => 'invite.admin.inc',
+      'file' => 'includes/invite.admin.inc',
       'controller class' => 'InviteTypeUIController',
     ),
     'access callback' => 'invite_type_access',
@@ -62,7 +63,7 @@ function invite_entity_info() {
  * Implements hook_entity_info_alter().
  */
 function invite_entity_info_alter(&$entity_info) {
-  foreach (invite_types() as $type => $info) {
+  foreach (invite_get_types() as $type => $info) {
     $entity_info['invite']['bundles'][$type] = array(
       'label' => $info->label,
       'admin' => array(
@@ -83,7 +84,7 @@ function invite_menu() {
     'title' => 'Add Invite',
     'page callback' => 'invite_admin_add_page',
     'access arguments' => array('administer invite entities'),
-    'file' => 'invite.admin.inc',
+    'file' => 'includes/invite.admin.inc',
     'type' => MENU_LOCAL_ACTION,
     'tab_parent' => 'invite',
     'tab_root' => 'invite',
@@ -99,7 +100,7 @@ function invite_menu() {
     'page arguments' => array($invite_uri_argument_position),
     'access callback' => 'entity_access',
     'access arguments' => array('view', 'invite', $invite_uri_argument_position),
-    'file' => 'invite.pages.inc',
+    'file' => 'includes/invite.pages.inc',
   );
 
   $items[$invite_uri . '/view'] = array(
@@ -116,7 +117,7 @@ function invite_menu() {
     'page arguments' => array('invite_delete_form', $invite_uri_argument_position),
     'access callback' => 'entity_access',
     'access arguments' => array('edit', 'invite', $invite_uri_argument_position),
-    'file' => 'invite.admin.inc',
+    'file' => 'includes/invite.admin.inc',
   );
 
   $items[$invite_uri . '/edit'] = array(
@@ -125,19 +126,19 @@ function invite_menu() {
     'page arguments' => array('invite_form', $invite_uri_argument_position),
     'access callback' => 'entity_access',
     'access arguments' => array('edit', 'invite', $invite_uri_argument_position),
-    'file' => 'invite.admin.inc',
+    'file' => 'includes/invite.admin.inc',
     'type' => MENU_LOCAL_TASK,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
 
-  foreach (invite_types() as $type => $info) {
+  foreach (invite_get_types() as $type => $info) {
     $items['invite/add/' . $type] = array(
       'title' => 'Add invite',
       'page callback' => 'invite_add',
       'page arguments' => array(2),
       'access callback' => 'entity_access',
       'access arguments' => array('create', 'invite', $type),
-      'file' => 'invite.admin.inc',
+      'file' => 'includes/invite.admin.inc',
     );
   }
 
@@ -148,7 +149,7 @@ function invite_menu() {
     'access arguments' => array('administer invite types'),
     'weight' => 1,
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'invite.admin.inc',
+    'file' => 'includes/invite.admin.inc',
   );
 
   return $items;
@@ -266,7 +267,13 @@ function invite_load_multiple($tkids = array(), $conditions = array(), $reset = 
  * Save invite.
  */
 function invite_save($invite) {
-  entity_save('invite', $invite);
+  // Invoke hook_invite_validate
+  $invite_valid = TRUE;
+  foreach (module_implements('invite_validate') as $module) {
+    $invite_valid = $invite_valid && module_invoke($module, 'invite_validate', $invite);
+  }
+
+  return $invite_valid ? entity_save('invite', $invite) : FALSE;
 }
 
 /**
@@ -287,13 +294,12 @@ function invite_delete_multiple($invite_ids) {
  * Load Invite Type.
  */
 function invite_type_load($invite_type) {
-  dpm(123);
-  return invite_types($invite_type);
+  return invite_get_types($invite_type);
 }
 /**
  * List of Invite Types.
  */
-function invite_types($type_name = NULL) {
+function invite_get_types($type_name = NULL) {
   $types = entity_load_multiple_by_name('invite_type', isset($type_name) ? array($type_name) : FALSE);
   return isset($type_name) ? reset($types) : $types;
 }

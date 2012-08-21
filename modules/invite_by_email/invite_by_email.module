@@ -1,0 +1,132 @@
+<?php
+
+function invite_by_mail_menu() {
+
+}
+
+function invite_by_email_invite_validate($invite) {
+  $validated = TRUE;
+  if ($invite->type == 'invite_by_email') {
+    $entity = entity_metadata_wrapper('invite', $invite);
+    dpm(get_class($entity));
+    $mail_address = $entity->field_invitation_email_address->value();
+    // Validate is email address valid.
+    if (!valid_email_address($mail_address)) {
+      $validated = FALSE;
+      drupal_set_message(t('Email address %email is invalid.', array('%email' => $mail_address)), 'error');
+    }
+
+    // Check that we are not inviting invite's author.
+    dpm(get_class($entity));
+    if ($entity->inviter->mail->value() == $mail_address) {
+      $validated = FALSE;
+      drupal_set_message(t('You couldn\'t invite yourself.'), 'error');
+    }
+
+    // Check that this email address wasn't used by user before.
+    $query = db_select('field_data_field_invitation_email_address', 'address');
+    $query->join('invite', 'i', 'i.iid=address.entity_id');
+    $duplicate = $query->condition('i.uid', $entity->inviter->uid->value(), '=')
+      ->fields('address', array('field_invitation_email_address_value'))
+      ->condition('address.field_invitation_email_address_value', $mail_address, '=')
+      ->condition('address.deleted', 0, '=')
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+    if ($duplicate) {
+      $validated = FALSE;
+      drupal_set_message(t('You have inveted this user already.'), 'error');
+    }
+  }
+
+  return $validated;
+}
+
+function invite_by_mail_presave($invite, $type) {
+  if ($invite->type == 'invite_by_email') {
+    $entity = entity_metadata_wrapper('invite', $invite);
+    $mail_address = $entity->field_invitation_email_address->value();
+    if ($account = user_load_by_mail($mail_address)) {
+      $invite->invitee = $account->uid;
+    }
+  }
+}
+
+function invite_by_email_entity_insert($invite, $type) {
+  if ($type == 'invite' && $invite->type == 'invite_by_email') {
+    $entity = entity_metadata_wrapper('invite', $invite);
+    $mail = $entity->field_invitation_email_address->value();
+    if ($account = user_load_by_mail($mail)) {
+      // User already exists in system.
+
+    }
+    invite_by_mail_send($invite);
+  }
+}
+
+/**
+ * Send an invite.
+ *
+ * The invitation email is sent to the invitee, and if sending is successful,
+ * the invite is saved.
+ *
+ * @param $invite
+ *   Invite object.
+ * @param $send
+ *   The invitation email will be sent to the invitee only when $send is TRUE.
+ *   Otherwise, only processing is done.
+ * @return
+ *   TRUE, if sending was successful; FALSE otherwise..
+ */
+function invite_by_mail_send($invite, $send = TRUE) {
+  global $language;
+
+  // Check if this is an existing invite.
+  $existing_invite = invite_load($invite->reg_code);
+  if ($existing_invite) {
+    $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
+    $invite->resent++;
+  }
+
+  $entity = entity_metadata_wrapper('invite', $invite);
+  if ($send) {
+    if (!variable_get('invite_use_users_email', 0)) {
+      $from = variable_get('invite_manual_from', '');
+    }
+    else {
+      $from = $entity->inviter->mail->value();
+    }
+    if (empty($from)) {
+      // Never pass an empty string to drupal_mail()
+      $from = NULL;
+    }
+
+    $params = array('invite' => $invite);
+
+    // Override Reply-To address.
+    if (!variable_get('invite_use_users_email_replyto', 0)) {
+      $reply_to = variable_get('invite_manual_reply_to', '');
+    }
+    else {
+      $reply_to = $entity->inviter->mail->value();
+    }
+    if (!empty($reply_to)) {
+      $params['reply-to'] = $reply_to;
+    }
+
+    // Send e-mail.
+    $result = drupal_mail('invite', 'invite', $entity->field_invitation_email_address->value(), $language, $params, $from, TRUE);
+  }
+
+  if (!$send || $result['result']) {
+    // Notify other modules.
+    if (!$existing_invite) {
+      module_invoke_all('invite_by_email_send', $invite, $send);
+    }
+
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}

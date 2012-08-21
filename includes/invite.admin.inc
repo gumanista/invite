@@ -26,7 +26,7 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
     '#maxlength' => 32,
     '#disabled' => $invite_type->isLocked() && $op != 'clone',
     '#machine_name' => array(
-      'exists' => 'invite_types',
+      'exists' => 'invite_get_types',
       'source' => array('label'),
     ),
     '#description' => t('A unique machine-readable name for this invite type. It must only contain lowercase letters, numbers, and underscores.'),
@@ -108,7 +108,7 @@ function invite_type_form_delete_confirm_submit($form, &$form_state) {
  */
 function invite_admin_add_page() {
   $items = array();
-  foreach (invite_types() as $invite_type_key => $invite_type) {
+  foreach (invite_get_types() as $invite_type_key => $invite_type) {
     $items[] = l(entity_label('invite_type', $invite_type), 'invite/add/' . $invite_type_key);
   }
   return array('list' => array('#theme' => 'item_list', '#items' => $items, '#title' => t('Select type of invite to create.')));
@@ -118,7 +118,7 @@ function invite_admin_add_page() {
  * Add new invite page callback.
  */
 function invite_add($type) {
-  $invite_type = invite_types($type);
+  $invite_type = invite_get_types($type);
 
   $invite = entity_create('invite', array('type' => $type));
   drupal_set_title(t('Create @name', array('@name' => entity_label('invite_type', $invite_type))));
@@ -195,13 +195,14 @@ function invite_form_submit($form, &$form_state) {
 
   entity_form_submit_build_entity('invite', $invite, $form, $form_state);
 
-  invite_save($invite);
-
-  $invite_uri = entity_uri('invite', $invite);
-
-  $form_state['redirect'] = $invite_uri['path'];
-
-  drupal_set_message(t('invite %title saved.', array('%title' => entity_label('invite', $invite))));
+  if (invite_save($invite)) {
+    $invite_uri = entity_uri('invite', $invite);
+    $form_state['redirect'] = $invite_uri['path'];
+    drupal_set_message(t('Invite %title added.', array('%title' => entity_label('invite', $invite))));
+  }
+  else {
+    drupal_set_message(t('Saving invite %title failed.', array('%title' => entity_label('invite', $invite))), 'error');
+  }
 }
 
 function invite_form_submit_delete($form, &$form_state) {

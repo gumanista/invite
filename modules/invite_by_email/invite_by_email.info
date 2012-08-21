@@ -3,5 +3,6 @@ description = Allow users invite other using e-mail
 core = 7.x
 
 files[] = invite_by_mail.module
+files[] = invite_by_mail.admin.inc
 
 dependencies[] = invite
