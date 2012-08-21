@@ -239,3 +239,34 @@ function invite_delete_form_submit($form, &$form_state) {
 
   $form_state['redirect'] = '<front>';
 }
+
+
+function invite_settings_form() {
+  $form = array();
+
+  $form['invite_default_expiry_time'] = array(
+    '#type' => 'select',
+    '#title' => t('Invitation expiry'),
+    '#default_value' => variable_get('invite_default_expiry_time', 30),
+    '#options' => drupal_map_assoc(array(1, 3, 7, 14, 30, 60, 365)),
+    '#description' => t('Set the expiry period for user invitations, in days.'),
+    '#multiple' => FALSE,
+    '#required' => TRUE,
+  );
+
+  $form['invite_registration_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Path to registration page'),
+    '#default_value' => variable_get('invite_registration_path', 'user/register'),
+    '#description' => t('Path to the registration page for invited users. Useful when using the <em>Assign from Path</em> option of <a href="@url">Auto Assign Roles</a> module.', array('@url' => 'http://drupal.org/project/autoassignrole')),
+  );
+
+  $form['invite_require_approval'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Require administrator approval for invitees'),
+    '#default_value' => variable_get('invite_require_approval', FALSE),
+    '#description' => t('Accounts that have been created with an invitation will require administrator approval.'),
+  );
+
+  return system_settings_form($form);
+}

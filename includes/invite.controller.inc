@@ -16,7 +16,7 @@ class InviteController extends EntityAPIController {
 //      'title' => '',
 //      'description' => '',
       'created' => REQUEST_TIME,
-      'expiry' => REQUEST_TIME + variable_get('invite_default_expiry_time', 30 * 24 * 60 * 60),
+      'expiry' => REQUEST_TIME + variable_get('invite_default_expiry_time', 30) * 24 * 60 * 60,
       'uid' => $user->uid,
       'invitee' => 0,
       'reg_code' => invite_generate_code(),

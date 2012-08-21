@@ -152,6 +152,31 @@ function invite_menu() {
     'file' => 'includes/invite.admin.inc',
   );
 
+  // Admin menu items
+//  $items['admin/people/invites'] = array(
+//    'title' => 'Invites',
+//    'page callback' => 'invite_admin_overview',
+//    'access arguments' => array('administer invitations'),
+//    'type' => MENU_LOCAL_TASK,
+//    'file' => 'includes/invite.admin.inc',
+//  );
+  $items['admin/config/people/invite'] = array(
+    'title' => 'Invite',
+    'description' => 'Modify invitation settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('invite_settings_form'),
+    'access arguments' => array('administer invitations'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 10,
+    'file' => 'includes/invite.admin.inc',
+  );
+
+  $items['admin/config/people/invite/common'] = array(
+    'title' => 'Invite',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 10,
+  );
+
   return $items;
 }
 
@@ -190,6 +215,11 @@ function invite_type_access($op, $entity = NULL) {
  */
 function invite_permission() {
   $permissions = array(
+    'administer invitations' => array(
+      'title' => t('Administer invitations'),
+      'description' => t('Administer all invitations'),
+      'restrict access' => TRUE,
+    ),
     'administer invite types' => array(
       'title' => t('Administer invite types'),
       'description' => t('Allows users to configure invite types and their fields.'),
