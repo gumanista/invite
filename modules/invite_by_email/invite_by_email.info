@@ -5,4 +5,6 @@ core = 7.x
 files[] = invite_by_mail.module
 files[] = invite_by_mail.admin.inc
 
+configure = admin/config/people/invite/by_mail
+
 dependencies[] = invite

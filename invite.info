@@ -7,4 +7,6 @@ files[] = includes/invite.controller.inc
 files[] = includes/invite.pages.inc
 files[] = includes/invite.info.inc
 
+configure = admin/config/people/invite
+
 dependencies[] = entity

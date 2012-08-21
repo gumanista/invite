@@ -40,13 +40,10 @@ function invite_by_email_install() {
   );
 
   foreach ($types as $type) {
-//    dpm($type);
     $type = entity_create('invite_type', $type);
     $type->save();
-    dpm($type);
     if (!empty($fields[$type->type])) {
       foreach ($fields[$type->type] as $field) {
-        dpm($field);
         $info = field_info_field($field['definition']['field_name']);
         if (empty($info)) {
           field_create_field($field['definition']);
