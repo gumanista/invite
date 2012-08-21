@@ -1,10 +1,10 @@
 <?php
 
 function invite_by_email_settings_form() {
-  $form['invite_subject'] = array(
+  $form['invite_default_mail_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
-    '#default_value' => variable_get('invite_subject', t('[invite:inviter:name] has sent you an invite!')),
+    '#default_value' => variable_get('invite_default_mail_subject', t('[invite:inviter:name] has sent you an invite!')),
     '#description' => t('Type the default subject of the invitation e-mail.') . ' ' . t('Use the syntax [token] if you want to insert a replacement pattern.'),
     '#required' => TRUE,
   );

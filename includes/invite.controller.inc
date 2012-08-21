@@ -20,6 +20,7 @@ class InviteController extends EntityAPIController {
       'uid' => $user->uid,
       'invitee' => 0,
       'reg_code' => invite_generate_code(),
+      'data' => serialize(array()),
     );
     return parent::create($values);
   }
