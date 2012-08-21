@@ -85,6 +85,10 @@ class Invite extends Entity {
     return user_load($this->uid);
   }
 
+  public function join_link() {
+    return url('invite/accept/' . $this->reg_code, array('absolute' => TRUE));
+  }
+
   /**
    * Sets a new user owning this profile.
    *

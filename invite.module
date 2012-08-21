@@ -153,13 +153,6 @@ function invite_menu() {
   );
 
   // Admin menu items
-//  $items['admin/people/invites'] = array(
-//    'title' => 'Invites',
-//    'page callback' => 'invite_admin_overview',
-//    'access arguments' => array('administer invitations'),
-//    'type' => MENU_LOCAL_TASK,
-//    'file' => 'includes/invite.admin.inc',
-//  );
   $items['admin/config/people/invite'] = array(
     'title' => 'Invite',
     'description' => 'Modify invitation settings.',
@@ -175,6 +168,30 @@ function invite_menu() {
     'title' => 'Invite',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 10,
+  );
+
+  // Frontend menu items
+  $items['invite/accept/%invite_by_code'] = array(
+    'page callback' => 'invite_accept',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'invite.pages.inc',
+  );
+  $items['invite/withdraw/%invite_by_code'] = array(
+    'page callback' => 'drupal_get_form',
+//    'page arguments' => array('invite_withdraw', 2),
+//    'access callback' => 'invite_withdraw_access',
+//    'access arguments' => array(2),
+    'type' => MENU_CALLBACK,
+  );
+  $items['invite/resend/%invite_by_code'] = array(
+    'title' => 'Resend invitation',
+//    'page callback' => 'invite_resend',
+//    'page arguments' => array(2),
+//    'access arguments' => array('send invitations'),
+    'type' => MENU_CALLBACK,
+    'file' => 'invite.pages.inc',
   );
 
   return $items;
@@ -279,18 +296,23 @@ function invite_entity_property_info_alter(&$info) {
   );
 }
 
+function invite_by_code_load($reg_code) {
+  $invites = invite_load_multiple(array(), array('reg_code' => $reg_code));
+  return reset($invites);
+}
+
 /**
  * Load a invite.
  */
-function invite_load($tkid, $reset = FALSE) {
-  $invites = invite_load_multiple(array($tkid), array(), $reset);
+function invite_load($iid, $reset = FALSE) {
+  $invites = invite_load_multiple(array($iid), array(), $reset);
   return reset($invites);
 }
 /**
  * Load multiple invites based on certain conditions.
  */
-function invite_load_multiple($tkids = array(), $conditions = array(), $reset = FALSE) {
-  return entity_load('invite', $tkids, $conditions, $reset);
+function invite_load_multiple($iids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('invite', $iids, $conditions, $reset);
 }
 
 /**

@@ -7,7 +7,6 @@ class InviteMetadataController extends EntityDefaultMetadataController {
   public function entityPropertyInfo() {
     $info = parent::entityPropertyInfo();
     $properties = &$info[$this->type]['properties'];
-    dpm($info);
 
     $properties['type'] = array(
       'setter callback' => 'entity_property_verbatim_set',
@@ -19,6 +18,13 @@ class InviteMetadataController extends EntityDefaultMetadataController {
     unset($properties['arguments']);
     // Unset the uid property, as it is available via the user anyway.
     unset($properties['uid']);
+
+    $properties['join_link'] = array(
+      'label' => t("Join link"),
+      'type' => 'uri',
+      'description' => t("Link user should use for registration by invitation."),
+      'getter callback' => 'entity_property_getter_method',
+    );
 
     $properties['inviter'] = array(
       'label' => t("Inviter"),
@@ -58,8 +64,6 @@ class InviteMetadataController extends EntityDefaultMetadataController {
       'description' => t('The time user have joined.'),
     ) + $properties['joined'];
 
-    dpm($info);
     return $info;
-
   }
 }
