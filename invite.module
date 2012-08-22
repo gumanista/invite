@@ -361,12 +361,21 @@ function invite_get_types($type_name = NULL) {
  */
 function invite_type_save($invite_type) {
   entity_save('invite_type', $invite_type);
+
+  if (variable_get($invite_type->type . '_' . $invite_type->invite_processor, FALSE)) {
+    $function = $invite_type->invite_processor . '_invite_type_create';
+    if (function_exists($function)) {
+      $function($invite_type);
+    }
+    variable_set($invite_type->type . '_' . $invite_type->invite_processor, TRUE);
+  }
 }
 
 /**
  * Delete single case type.
  */
 function invite_type_delete($invite_type) {
+  variable_del($invite_type->type . '_' . $invite_type->invite_processor);
   entity_delete('invite_type', entity_id('invite_type', $invite_type));
 }
 

@@ -113,6 +113,13 @@ function invite_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'invite_processor' => array(
+        'description' => 'Invite processor.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'description' => array(
         'description' => 'A brief description of this type.',
         'type' => 'text',

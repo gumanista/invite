@@ -4,10 +4,30 @@
  * Generates the invite type editing form.
  */
 function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
-
   if ($op == 'clone') {
     $invite_type->label .= ' (cloned)';
     $invite_type->type = '';
+  }
+//  // Load all plugins type "operation".
+//  ctools_include('plugins');
+//  $operations = ctools_get_plugins('invite', 'invite_type');
+//
+//  $operation_options = array();
+//  foreach ($operations as $id => $operation) {
+//    $operation_options[$id] = $operation['label'];
+//  }
+//
+  $invite_processors = array();
+  foreach (module_implements('invite_processor') as $module) {
+    $processor = module_invoke($module, 'invite_processor');
+    $invite_processors[$module] = $processor['label'];
+  }
+
+  if (empty($invite_processors)) {
+    $form['message'] = array(
+      '#markup' => t('Sorry no Invitation Type plugins available in the system.'),
+    );
+    return $form;
   }
 
   $form['label'] = array(
@@ -30,6 +50,16 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
       'source' => array('label'),
     ),
     '#description' => t('A unique machine-readable name for this invite type. It must only contain lowercase letters, numbers, and underscores.'),
+  );
+
+  $form['invite_processor'] = array(
+    '#title' => t('Invite type'),
+    '#type' => 'select',
+    '#default_value' => !empty($invite_type->invite_processor) ? $invite_type->invite_processor : NULL,
+    '#disabled' => !empty($invite_type->invite_processor),
+    '#description' => t('Invitation processing plugin.'),
+    '#options' => $invite_processors,
+    '#required' => TRUE,
   );
 
   $form['description'] = array(

@@ -10,3 +10,4 @@ files[] = includes/invite.info.inc
 configure = admin/config/people/invite
 
 dependencies[] = entity
+dependencies[] = ctools

@@ -15,9 +15,101 @@ function invite_by_email_menu() {
   return $items;
 }
 
+function invite_by_email_invite_processor() {
+  return array(
+    'label' => t('Invite By Mail'),
+  );
+}
+
+function invite_by_email_invite_type_create($invite_type) {
+  $fields = array(
+    'field_invitation_email_address' => array(
+      'definition' => array(
+        'field_name' => 'field_invitation_email_address',
+        'type' => 'text',
+        'cardinality' => 1,
+      ),
+      'instance' => array(
+        'field_name' => 'field_invitation_email_address',
+        'entity_type' => 'invite',
+        'label' => 'E-mail',
+        'bundle' => 'invite_by_email',
+        'description' => 'Type e-mail address of person you wish invite.',
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 10,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'text_textfield',
+            'weight' => 10,
+          ),
+        ),
+      ),
+    ),
+    'field_invitation_email_subject' => array(
+      'definition' => array(
+        'field_name' => 'field_invitation_email_subject',
+        'type' => 'text',
+        'cardinality' => 1,
+      ),
+      'instance' => array(
+        'field_name' => 'field_invitation_email_subject',
+        'entity_type' => 'invite',
+        'label' => 'Subject',
+        'bundle' => 'invite_by_email',
+        'description' => 'Enter e-mail subject.',
+        'widget' => array(
+          'type' => 'text_textfield',
+          'weight' => 20,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'text_textfield',
+            'weight' => 20,
+          ),
+        ),
+      ),
+    ),
+    'field_invitation_email_body' => array(
+      'definition' => array(
+        'field_name' => 'field_invitation_email_body',
+        'type' => 'text_long',
+        'cardinality' => 1,
+      ),
+      'instance' => array(
+        'field_name' => 'field_invitation_email_body',
+        'entity_type' => 'invite',
+        'label' => 'Body',
+        'bundle' => 'invite_by_email',
+        'description' => 'Enter e-mail body.',
+        'widget' => array(
+          'type' => 'text_textarea',
+          'weight' => 30,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'text_textarea',
+            'weight' => 30,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  foreach ($fields as $field) {
+    $info = field_info_field($field['definition']['field_name']);
+    if (empty($info)) {
+      field_create_field($field['definition']);
+    }
+    $field['instance']['bundle'] = $invite_type->type;
+    field_create_instance($field['instance']);
+  }
+}
+
 function invite_by_email_invite_validate($invite) {
   $validated = TRUE;
-  if ($invite->type == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail_address = $entity->field_invitation_email_address->value();
     // Validate is email address valid.
@@ -51,10 +143,9 @@ function invite_by_email_invite_validate($invite) {
   return $validated;
 }
 
-function invite_by_mail_presave($invite, $type) {
+function invite_by_email_entity_presave($invite, $type) {
   global $user;
-  dpm(123);
-  if ($invite->type == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail_address = $entity->field_invitation_email_address->value();
     if ($account = user_load_by_mail($mail_address)) {
@@ -66,24 +157,28 @@ function invite_by_mail_presave($invite, $type) {
       'profile' => user_load($user->uid),
     );
     $invite->data = array(
-      'subject' => token_replace(trim($entity->field_invitation_email_address->value()), $token_data),
+      'subject' => token_replace(trim($entity->field_invitation_email_subject->value()), $token_data),
       'message' => token_replace($entity->field_invitation_email_body->value(), $token_data),
     );
-    dpm($invite);
 
     $invite->data = serialize($invite->data);
   }
 }
 
 function invite_by_email_entity_insert($invite, $type) {
-  if ($type == 'invite' && $invite->type == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail = $entity->field_invitation_email_address->value();
     if ($account = user_load_by_mail($mail)) {
       // User already exists in system.
 
     }
-    invite_by_mail_send($invite);
+    if (invite_by_mail_send($invite)) {
+      drupal_set_message(t('Message was sent'));
+    }
+    else {
+      drupal_set_message(t('Failed to send a message.'), 'error');
+    }
   }
 }
 
@@ -166,21 +261,23 @@ function invite_by_email_mail($key, &$message, $params) {
     $message['headers']['Reply-To'] = $params['reply-to'];
   }
 
-  $message['subject'] = $invite->data['subject'];
-  $message['body'][] = $invite->data['message'];
+  $entity = entity_metadata_wrapper('invite', $invite);
+  $token_data = array(
+    'invite' => $invite,
+    'user' => $user,
+    'profile' => user_load($user->uid),
+  );
+
+  $message['subject'] = token_replace(trim($entity->field_invitation_email_subject->value()), $token_data);
+  $message['body'][] = token_replace($entity->field_invitation_email_body->value(), $token_data);
 }
 
 function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) {
-  $entity = $form['#entity'];
-  $form['#entity']->field_invitation_email_address['und'][0] = 'ffffffff';
-  if ($entity->type == 'invite_by_email') {
+  $invite = $form['#entity'];
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
     $language_subject = $form['field_invitation_email_subject']['#language'];
-    $form['field_invitation_email_subject']['#value'] = array(variable_get('invite_default_mail_subject', ''));
-//    $form['field_invitation_email_subject'][$language_subject]['#default_value'] = array(variable_get('invite_default_mail_subject', ''));
-//    $form['field_invitation_email_subject'][$language_subject][0]['value'] = variable_get('invite_default_mail_subject', '');
-    $form['field_invitation_email_subject'][$language_subject]['#value'] = array(variable_get('invite_default_mail_subject', ''));
-    $form['field_invitation_email_body'][$language_subject][0]['#default_value'] = variable_get('invite_default_mail_template', '');
-    dpm($form_id);
-    dpm($form);
+    $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
+    $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_template', '');
+    $form['actions']['submit']['#value'] = t('Send Invitation');
   }
 }

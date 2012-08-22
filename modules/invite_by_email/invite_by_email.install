@@ -16,109 +16,28 @@ TEMPLATE
     array(
       'type' => 'invite_by_email',
       'module' => 'invite_by_email',
+      'invite_processor' => 'invite_by_email',
       'label' => st('Invite by e-mail'),
       'description' => st('Invitation by e-mail.'),
-    ),
-  );
-
-  $fields = array(
-    'invite_by_email' => array(
-      'field_invitation_email_address' => array(
-        'definition' => array(
-          'field_name' => 'field_invitation_email_address',
-          'type' => 'text',
-          'cardinality' => 1,
-        ),
-        'instance' => array(
-          'field_name' => 'field_invitation_email_address',
-          'entity_type' => 'invite',
-          'label' => 'E-mail',
-          'bundle' => 'invite_by_email',
-          'description' => 'Type e-mail address of person you wish invite.',
-          'widget' => array(
-            'type' => 'text_textfield',
-            'weight' => 10,
-          ),
-          'display' => array(
-            'default' => array(
-              'type' => 'text_textfield',
-              'weight' => 10,
-            ),
-          ),
-        ),
-      ),
-      'field_invitation_email_subject' => array(
-        'definition' => array(
-          'field_name' => 'field_invitation_email_subject',
-          'type' => 'text',
-          'cardinality' => 1,
-        ),
-        'instance' => array(
-          'field_name' => 'field_invitation_email_subject',
-          'entity_type' => 'invite',
-          'label' => 'Subject',
-          'bundle' => 'invite_by_email',
-          'description' => 'Enter e-mail subject.',
-          'widget' => array(
-            'type' => 'text_textfield',
-            'weight' => 20,
-          ),
-          'display' => array(
-            'default' => array(
-              'type' => 'text_textfield',
-              'weight' => 20,
-            ),
-          ),
-        ),
-      ),
-      'field_invitation_email_body' => array(
-        'definition' => array(
-          'field_name' => 'field_invitation_email_body',
-          'type' => 'text_long',
-          'cardinality' => 1,
-        ),
-        'instance' => array(
-          'field_name' => 'field_invitation_email_body',
-          'entity_type' => 'invite',
-          'label' => 'Body',
-          'bundle' => 'invite_by_email',
-          'description' => 'Enter e-mail body.',
-          'widget' => array(
-            'type' => 'text_textarea',
-            'weight' => 30,
-          ),
-          'display' => array(
-            'default' => array(
-              'type' => 'text_textarea',
-              'weight' => 30,
-            ),
-          ),
-        ),
-      ),
     ),
   );
 
   foreach ($types as $type) {
     $type = entity_create('invite_type', $type);
     $type->save();
-    if (!empty($fields[$type->type])) {
-      foreach ($fields[$type->type] as $field) {
-        $info = field_info_field($field['definition']['field_name']);
-        if (empty($info)) {
-          field_create_field($field['definition']);
-        }
-        field_create_instance($field['instance']);
-      }
+    $function = 'invite_by_email_invite_type_create';
+    if (function_exists($function)) {
+      $function($type);
     }
   }
 }
 
 function invite_by_email_uninstall() {
-  $types = array(
-    'invite_by_email',
-  );
+  $types = invite_get_types();
   foreach ($types as $type) {
-    entity_delete('invite_type', $type);
+    if (!empty($type->invite_processor) && $type->invite_processor == 'invite_by_email') {
+      entity_delete('invite_type', $type->type);
+    }
   }
 
   $fields = array(

@@ -13,8 +13,6 @@ class InviteController extends EntityAPIController {
   public function create(array $values = array()) {
     global $user;
     $values += array(
-//      'title' => '',
-//      'description' => '',
       'created' => REQUEST_TIME,
       'expiry' => REQUEST_TIME + variable_get('invite_default_expiry_time', 30) * 24 * 60 * 60,
       'uid' => $user->uid,
@@ -79,6 +77,10 @@ class Invite extends Entity {
    */
   public $uid;
 
+  public function type_details() {
+    return invite_get_types($this->type);
+  }
+
   /**
    * Returns the user owning this profile.
    */
@@ -86,7 +88,7 @@ class Invite extends Entity {
     return user_load($this->uid);
   }
 
-  public function join_link() {
+  public function joinLink() {
     return url('invite/accept/' . $this->reg_code, array('absolute' => TRUE));
   }
 
@@ -110,6 +112,7 @@ class Invite extends Entity {
       // have that as interim label.
       $values['label'] = $type->label;
     }
+
     parent::__construct($values, 'invite');
   }
 
@@ -135,6 +138,12 @@ class Invite extends Entity {
 
   protected function defaultUri() {
     return array('path' => 'invite/' . $this->identifier());
+  }
+
+  public function save() {
+    dpm($this);
+    dpm(123);
+    return parent::save();
   }
 }
 
