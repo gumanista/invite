@@ -1,5 +1,9 @@
 <?php
 
+define('INVITE_SESSION_CODE',   'invite_code');
+define('INVITE_SESSION_FAILED', 'invite_failed');
+define('INVITE_SESSION_ADMIN',  'invite_admin_filter');
+
 /**
  * Implements hook_entity_info().
  */
@@ -176,7 +180,7 @@ function invite_menu() {
     'page arguments' => array(2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-    'file' => 'invite.pages.inc',
+    'file' => 'includes/invite.pages.inc',
   );
   $items['invite/withdraw/%invite_by_code'] = array(
     'page callback' => 'drupal_get_form',
@@ -191,7 +195,7 @@ function invite_menu() {
 //    'page arguments' => array(2),
 //    'access arguments' => array('send invitations'),
     'type' => MENU_CALLBACK,
-    'file' => 'invite.pages.inc',
+    'file' => 'includes/invite.pages.inc',
   );
 
   return $items;
@@ -297,7 +301,7 @@ function invite_entity_property_info_alter(&$info) {
 }
 
 function invite_by_code_load($reg_code) {
-  $invites = invite_load_multiple(array(), array('reg_code' => $reg_code));
+  $invites = invite_load_multiple(FALSE, array('reg_code' => $reg_code));
   return reset($invites);
 }
 

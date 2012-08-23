@@ -173,7 +173,9 @@ function invite_by_email_entity_insert($invite, $type) {
       // User already exists in system.
 
     }
-    if (invite_by_mail_send($invite)) {
+
+    // TODO: move to Invite module.
+    if ($invite->sendInvite()) {
       drupal_set_message(t('Message was sent'));
     }
     else {
@@ -183,20 +185,16 @@ function invite_by_email_entity_insert($invite, $type) {
 }
 
 /**
- * Send an invite.
+ * Implements processor_send_invitation function.
  *
- * The invitation email is sent to the invitee, and if sending is successful,
- * the invite is saved.
+ * The invitation email is sent to the invitee
  *
  * @param $invite
  *   Invite object.
- * @param $send
- *   The invitation email will be sent to the invitee only when $send is TRUE.
- *   Otherwise, only processing is done.
  * @return
  *   TRUE, if sending was successful; FALSE otherwise..
  */
-function invite_by_mail_send($invite, $send = TRUE) {
+function invite_by_email_send_invitation($invite) {
   global $language;
 
   // Check if this is an existing invite.
@@ -207,46 +205,34 @@ function invite_by_mail_send($invite, $send = TRUE) {
   }
 
   $entity = entity_metadata_wrapper('invite', $invite);
-  if ($send) {
-    if (!variable_get('invite_use_users_email', 0)) {
-      $from = variable_get('invite_manual_from', '');
-    }
-    else {
-      $from = $entity->inviter->mail->value();
-    }
-    if (empty($from)) {
-      // Never pass an empty string to drupal_mail()
-      $from = NULL;
-    }
-
-    $params = array('invite' => $invite);
-
-    // Override Reply-To address.
-    if (!variable_get('invite_use_users_email_replyto', 0)) {
-      $reply_to = variable_get('invite_manual_reply_to', '');
-    }
-    else {
-      $reply_to = $entity->inviter->mail->value();
-    }
-    if (!empty($reply_to)) {
-      $params['reply-to'] = $reply_to;
-    }
-
-    // Send e-mail.
-    $result = drupal_mail('invite_by_email', 'invite', $entity->field_invitation_email_address->value(), $language, $params, $from, TRUE);
-  }
-
-  if (!$send || $result['result']) {
-    // Notify other modules.
-    if (!$existing_invite) {
-      module_invoke_all('invite_by_email_send', $invite, $send);
-    }
-
-    return TRUE;
+  if (!variable_get('invite_use_users_email', 0)) {
+    $from = variable_get('invite_manual_from', '');
   }
   else {
-    return FALSE;
+    $from = $entity->inviter->mail->value();
   }
+  if (empty($from)) {
+    // Never pass an empty string to drupal_mail()
+    $from = NULL;
+  }
+
+  $params = array('invite' => $invite);
+
+  // Override Reply-To address.
+  if (!variable_get('invite_use_users_email_replyto', 0)) {
+    $reply_to = variable_get('invite_manual_reply_to', '');
+  }
+  else {
+    $reply_to = $entity->inviter->mail->value();
+  }
+  if (!empty($reply_to)) {
+    $params['reply-to'] = $reply_to;
+  }
+
+  // Send e-mail.
+  $result = drupal_mail('invite_by_email', 'invite', $entity->field_invitation_email_address->value(), $language, $params, $from, TRUE);
+
+  return $result['result'];
 }
 
 /**

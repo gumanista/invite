@@ -92,6 +92,18 @@ class Invite extends Entity {
     return url('invite/accept/' . $this->reg_code, array('absolute' => TRUE));
   }
 
+  public function sendInvite() {
+    $result = FALSE;
+    $function = $this->type_details()->invite_processor . '_send_invitation';
+    if (function_exists($function) && $function($this)) {
+      // Notify other modules.
+      entity_get_controller('invite')->invoke('invite_send', $this);
+      $result = TRUE;
+    }
+
+    return $result;
+  }
+
   /**
    * Sets a new user owning this profile.
    *
@@ -141,8 +153,6 @@ class Invite extends Entity {
   }
 
   public function save() {
-    dpm($this);
-    dpm(123);
     return parent::save();
   }
 }
