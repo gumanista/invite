@@ -182,18 +182,21 @@ function invite_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'includes/invite.pages.inc',
   );
+
   $items['invite/withdraw/%invite_by_code'] = array(
     'page callback' => 'drupal_get_form',
-//    'page arguments' => array('invite_withdraw', 2),
-//    'access callback' => 'invite_withdraw_access',
-//    'access arguments' => array(2),
+    'page arguments' => array('invite_withdraw_form', 2),
+    'access callback' => 'invite_withdraw_access',
+    'access arguments' => array(2),
     'type' => MENU_CALLBACK,
+    'file' => 'includes/invite.pages.inc',
   );
+
   $items['invite/resend/%invite_by_code'] = array(
     'title' => 'Resend invitation',
-//    'page callback' => 'invite_resend',
-//    'page arguments' => array(2),
-//    'access arguments' => array('send invitations'),
+    'page callback' => 'invite_resend',
+    'page arguments' => array(2),
+    'access arguments' => array('send invitations'),
     'type' => MENU_CALLBACK,
     'file' => 'includes/invite.pages.inc',
   );
@@ -203,6 +206,12 @@ function invite_menu() {
 
 /**
  * Access callback for invite type.
+ *
+ * @param $op
+ * @param $invite
+ * @param null $account
+ * @param null $entity_type
+ * @return bool
  */
 function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
   global $user;
@@ -220,6 +229,30 @@ function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
       return user_access('administer invite entities')
         || user_access('edit any invite entities')
         || (user_access('edit own invite entities') && ($invite->uid == $account->uid));
+  }
+}
+
+/**
+ * Access callback for withdraw confirmation form.
+ *
+ * @param Invite $invite
+ *   The invitations to be withdrawn.
+ */
+function invite_withdraw_access($invite) {
+  global $user;
+
+  if (!$invite->joined ) {
+    $permission = 'withdraw own invitations';
+  }
+  else {
+    $permission = 'withdraw own accepted invitations';
+  }
+
+  if (($invite->uid == $user->uid && user_access($permission)) || user_access('administer invitations')) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
   }
 }
 
@@ -272,6 +305,8 @@ function invite_permission() {
 
 /**
  * Implements hook_entity_property_info_alter().
+ *
+ * @param $info
  */
 function invite_entity_property_info_alter(&$info) {
   $properties = &$info['invite']['properties'];
@@ -300,27 +335,46 @@ function invite_entity_property_info_alter(&$info) {
   );
 }
 
+/**
+ * Loads Invite by registration code.
+ *
+ * @param string $reg_code
+ * @return Invite
+ */
 function invite_by_code_load($reg_code) {
   $invites = invite_load_multiple(FALSE, array('reg_code' => $reg_code));
   return reset($invites);
 }
 
 /**
- * Load a invite.
+ * Loads Invite by Id.
+ *
+ * @param int $iid
+ * @param bool $reset
+ * @return mixed
  */
 function invite_load($iid, $reset = FALSE) {
   $invites = invite_load_multiple(array($iid), array(), $reset);
   return reset($invites);
 }
+
 /**
  * Load multiple invites based on certain conditions.
+ *
+ * @param array $iids
+ * @param array $conditions
+ * @param bool $reset
+ * @return mixed
  */
 function invite_load_multiple($iids = array(), $conditions = array(), $reset = FALSE) {
   return entity_load('invite', $iids, $conditions, $reset);
 }
 
 /**
- * Save invite.
+ * Saves Invite
+ *
+ * @param Invite $invite
+ * @return bool
  */
 function invite_save($invite) {
   // Invoke hook_invite_validate
@@ -334,6 +388,8 @@ function invite_save($invite) {
 
 /**
  * Delete single invite.
+ *
+ * @param Invite $invite
  */
 function invite_delete($invite) {
   entity_delete('invite', entity_id('invite' ,$invite));
@@ -341,6 +397,8 @@ function invite_delete($invite) {
 
 /**
  * Delete multiple invites.
+ *
+ * @param array $invite_ids
  */
 function invite_delete_multiple($invite_ids) {
   entity_delete_multiple('invite', $invite_ids);
@@ -348,12 +406,19 @@ function invite_delete_multiple($invite_ids) {
 
 /**
  * Load Invite Type.
+ *
+ * @param string $invite_type_name
+ * @return array|mixed
  */
-function invite_type_load($invite_type) {
-  return invite_get_types($invite_type);
+function invite_type_load($invite_type_name) {
+  return invite_get_types($invite_type_name);
 }
+
 /**
  * List of Invite Types.
+ *
+ * @param string $type_name
+ * @return array|mixed
  */
 function invite_get_types($type_name = NULL) {
   $types = entity_load_multiple_by_name('invite_type', isset($type_name) ? array($type_name) : FALSE);
@@ -361,30 +426,36 @@ function invite_get_types($type_name = NULL) {
 }
 
 /**
- * Save Invite Type entity.
+ * Saves Invite Type entity.
+ *
+ * @param InviteType $invite_type
  */
 function invite_type_save($invite_type) {
   entity_save('invite_type', $invite_type);
 
-  if (variable_get($invite_type->type . '_' . $invite_type->invite_processor, FALSE)) {
-    $function = $invite_type->invite_processor . '_invite_type_create';
+  if (variable_get($invite_type->type . '_' . $invite_type->invite_sending_controller, FALSE)) {
+    $function = $invite_type->invite_sending_controller . '_invite_type_create';
     if (function_exists($function)) {
       $function($invite_type);
     }
-    variable_set($invite_type->type . '_' . $invite_type->invite_processor, TRUE);
+    variable_set($invite_type->type . '_' . $invite_type->invite_sending_controller, TRUE);
   }
 }
 
 /**
- * Delete single case type.
+ * Deletes single Invite type.
+ *
+ * @param InviteType $invite_type
  */
 function invite_type_delete($invite_type) {
-  variable_del($invite_type->type . '_' . $invite_type->invite_processor);
+  variable_del($invite_type->type . '_' . $invite_type->invite_sending_controller);
   entity_delete('invite_type', entity_id('invite_type', $invite_type));
 }
 
 /**
- * Delete multiple case types.
+ * Delete multiple Invite types.
+ *
+ * @param array|string $invite_type_ids
  */
 function invite_type_delete_multiple($invite_type_ids) {
   entity_delete_multiple('invite_type', $invite_type_ids);

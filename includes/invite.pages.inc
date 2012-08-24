@@ -1,14 +1,23 @@
 <?php
 
 /**
-* Invte view callback.
-*/
+ * Invte view callback.
+ *
+ * @param Invite $invite
+ * @return bool
+ */
 function invite_view($invite) {
   drupal_set_title(entity_label('invite', $invite));
   dpm(entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full'));
   return entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full');
 }
 
+/**
+ * TODO: move to Invite class.
+ * Invitation accept callback.
+ *
+ * @param Invite $invite
+ */
 function invite_accept($invite) {
   global $user;
 
@@ -51,7 +60,7 @@ function invite_accept($invite) {
 /**
  * Menu callback; resend an expired invite.
  *
- * @param $invite
+ * @param Invite $invite
  *   An invitate object.
  */
 function invite_resend($invite) {
@@ -64,7 +73,56 @@ function invite_resend($invite) {
   else {
     return MENU_ACCESS_DENIED;
   }
+}
 
+/**
+ * Menu callback; display confirm form to withdraw an invitation.
+ *
+ * @param $form
+ * @param $form_state
+ * @param Invite $invite
+ *   Invite object.
+ * @return array
+ */
+function invite_withdraw_form($form, &$form_state, $invite) {
+  global $user;
 
+  $form['invite'] = array(
+    '#type' => 'value',
+    '#value' => $invite,
+  );
+  $description = (!$invite->joined && $invite->expiry > REQUEST_TIME) ? t("The invitee won't be able to register any more using this invitation !invite<br/>", array('!invite' => drupal_render(entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full')))) . ' ' : '';
+  $redirect = !empty($_REQUEST['destination']) ? $_REQUEST['destination'] : '<front>';
+
+  return confirm_form(
+    $form,
+    t('Are you sure you want to withdraw the invitation?'),
+    $redirect,
+    $description . t('This action cannot be undone.'),
+    t('Withdraw'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Submit handler to withdraw an invitation.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function invite_withdraw_form_submit($form, &$form_state) {
+  $invite = $form_state['values']['invite'];
+
+  db_update('invite')
+    ->fields(array(
+    'canceled' => 1,
+  ))
+    ->condition('reg_code', $invite->reg_code)
+    ->execute();
+
+  drupal_set_message(t('Invitation to %email has been withdrawn.', array('%email' => $invite->email)));
+
+  // Notify other modules.
+  module_invoke_all('invite_withdraw', $invite);
 }
 

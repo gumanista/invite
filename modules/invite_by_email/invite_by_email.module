@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Implements hook_menu().
+ *
+ * @return array
+ */
 function invite_by_email_menu() {
   $items['admin/config/people/invite/by_mail'] = array(
     'title' => 'Invite by mail',
@@ -15,7 +20,12 @@ function invite_by_email_menu() {
   return $items;
 }
 
-function invite_by_email_invite_processor() {
+/**
+ *
+ *
+ * @return array
+ */
+function invite_by_email_invite_sending_controller() {
   return array(
     'label' => t('Invite By Mail'),
   );
@@ -109,7 +119,7 @@ function invite_by_email_invite_type_create($invite_type) {
 
 function invite_by_email_invite_validate($invite) {
   $validated = TRUE;
-  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail_address = $entity->field_invitation_email_address->value();
     // Validate is email address valid.
@@ -145,7 +155,7 @@ function invite_by_email_invite_validate($invite) {
 
 function invite_by_email_entity_presave($invite, $type) {
   global $user;
-  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail_address = $entity->field_invitation_email_address->value();
     if ($account = user_load_by_mail($mail_address)) {
@@ -166,7 +176,7 @@ function invite_by_email_entity_presave($invite, $type) {
 }
 
 function invite_by_email_entity_insert($invite, $type) {
-  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail = $entity->field_invitation_email_address->value();
     if ($account = user_load_by_mail($mail)) {
@@ -185,7 +195,7 @@ function invite_by_email_entity_insert($invite, $type) {
 }
 
 /**
- * Implements processor_send_invitation function.
+ * Implements sending_controller_send_invitation function.
  *
  * The invitation email is sent to the invitee
  *
@@ -260,7 +270,7 @@ function invite_by_email_mail($key, &$message, $params) {
 
 function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) {
   $invite = $form['#entity'];
-  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_processor == 'invite_by_email') {
+  if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {
     $language_subject = $form['field_invitation_email_subject']['#language'];
     $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
     $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_template', '');

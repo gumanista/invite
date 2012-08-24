@@ -2,6 +2,12 @@
 
 /**
  * Generates the invite type editing form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param InviteType $invite_type
+ * @param string $op
+ * @return array
  */
 function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
   if ($op == 'clone') {
@@ -17,13 +23,13 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
 //    $operation_options[$id] = $operation['label'];
 //  }
 //
-  $invite_processors = array();
-  foreach (module_implements('invite_processor') as $module) {
-    $processor = module_invoke($module, 'invite_processor');
-    $invite_processors[$module] = $processor['label'];
+  $invite_sending_controllers = array();
+  foreach (module_implements('invite_sending_controller') as $module) {
+    $sending_controller = module_invoke($module, 'invite_sending_controller');
+    $invite_sending_controllers[$module] = $sending_controller['label'];
   }
 
-  if (empty($invite_processors)) {
+  if (empty($invite_sending_controllers)) {
     $form['message'] = array(
       '#markup' => t('Sorry no Invitation Type plugins available in the system.'),
     );
@@ -52,13 +58,13 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
     '#description' => t('A unique machine-readable name for this invite type. It must only contain lowercase letters, numbers, and underscores.'),
   );
 
-  $form['invite_processor'] = array(
+  $form['invite_sending_controller'] = array(
     '#title' => t('Invite type'),
     '#type' => 'select',
-    '#default_value' => !empty($invite_type->invite_processor) ? $invite_type->invite_processor : NULL,
-    '#disabled' => !empty($invite_type->invite_processor),
+    '#default_value' => !empty($invite_type->invite_sending_controller) ? $invite_type->invite_sending_controller : NULL,
+    '#disabled' => !empty($invite_type->invite_sending_controller),
     '#description' => t('Invitation processing plugin.'),
-    '#options' => $invite_processors,
+    '#options' => $invite_sending_controllers,
     '#required' => TRUE,
   );
 
@@ -89,6 +95,9 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
 
 /**
  * Submit handler for creating/editing invite_type.
+ *
+ * @param $form
+ * @param $form_state
  */
 function invite_type_form_submit(&$form, &$form_state) {
   $invite_type = entity_ui_form_submit_build_entity($form, $form_state);
@@ -99,12 +108,21 @@ function invite_type_form_submit(&$form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/invite-types';
 }
 
+/**
+ * @param $form
+ * @param $form_state
+ */
 function invite_type_form_submit_delete(&$form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/invite-types/' . $form_state['invite_type']->type . '/delete';
 }
 
 /**
  * Invite type delete form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param InviteType $invite_type
+ * @return array
  */
 function invite_type_form_delete_confirm($form, &$form_state, $invite_type) {
   $form_state['invite_type'] = $invite_type;
@@ -121,6 +139,9 @@ function invite_type_form_delete_confirm($form, &$form_state, $invite_type) {
 
 /**
  * Invite type delete form submit handler.
+ *
+ * @param $form
+ * @param $form_state
  */
 function invite_type_form_delete_confirm_submit($form, &$form_state) {
   $invite_type = $form_state['invite_type'];
@@ -132,9 +153,11 @@ function invite_type_form_delete_confirm_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/invite-types';
 }
 
-
 /**
  * Page to select invite Type to add new invite.
+ *
+ * @return array
+ *   Renderable array
  */
 function invite_admin_add_page() {
   $items = array();
@@ -146,6 +169,9 @@ function invite_admin_add_page() {
 
 /**
  * Add new invite page callback.
+ *
+ * @param string $type
+ * @return array|mixed
  */
 function invite_add($type) {
   $invite_type = invite_get_types($type);
@@ -160,6 +186,11 @@ function invite_add($type) {
 
 /**
  * Invite Form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param Invite $invite
+ * @return array
  */
 function invite_form($form, &$form_state, $invite) {
   $form_state['invite'] = $invite;
@@ -218,7 +249,10 @@ function invite_form_validate($form, &$form_state) {
 }
 
 /**
- * invite submit handler.
+ * Invite creation submit handler.
+ *
+ * @param $form
+ * @param $form_state
  */
 function invite_form_submit($form, &$form_state) {
   $invite = $form_state['invite'];
@@ -235,6 +269,12 @@ function invite_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Invite delete form handler
+ *
+ * @param $form
+ * @param $form_state
+ */
 function invite_form_submit_delete($form, &$form_state) {
   $invite = $form_state['invite'];
   $invite_uri = entity_uri('invite', $invite);
@@ -243,6 +283,11 @@ function invite_form_submit_delete($form, &$form_state) {
 
 /**
  * Delete confirmation form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param Invite $invite
+ * @return array
  */
 function invite_delete_form($form, &$form_state, $invite) {
   $form_state['invite'] = $invite;
@@ -260,6 +305,9 @@ function invite_delete_form($form, &$form_state, $invite) {
 
 /**
  * Delete form submit handler.
+ *
+ * @param $form
+ * @param $form_state
  */
 function invite_delete_form_submit($form, &$form_state) {
   $invite = $form_state['invite'];
@@ -270,7 +318,11 @@ function invite_delete_form_submit($form, &$form_state) {
   $form_state['redirect'] = '<front>';
 }
 
-
+/**
+ * Invite module settings form.
+ *
+ * @return array
+ */
 function invite_settings_form() {
   $form = array();
 

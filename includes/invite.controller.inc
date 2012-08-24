@@ -94,9 +94,10 @@ class Invite extends Entity {
 
   public function sendInvite() {
     $result = FALSE;
-    $function = $this->type_details()->invite_processor . '_send_invitation';
+    $function = $this->type_details()->invite_sending_controller . '_send_invitation';
     if (function_exists($function) && $function($this)) {
       // Notify other modules.
+      // TODO: refactor direct class name.
       entity_get_controller('invite')->invoke('invite_send', $this);
       $result = TRUE;
     }

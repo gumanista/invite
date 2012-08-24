@@ -16,7 +16,7 @@ TEMPLATE
     array(
       'type' => 'invite_by_email',
       'module' => 'invite_by_email',
-      'invite_processor' => 'invite_by_email',
+      'invite_sending_controller' => 'invite_by_email',
       'label' => st('Invite by e-mail'),
       'description' => st('Invitation by e-mail.'),
     ),
@@ -35,7 +35,7 @@ TEMPLATE
 function invite_by_email_uninstall() {
   $types = invite_get_types();
   foreach ($types as $type) {
-    if (!empty($type->invite_processor) && $type->invite_processor == 'invite_by_email') {
+    if (!empty($type->invite_sending_controller) && $type->invite_sending_controller == 'invite_by_email') {
       entity_delete('invite_type', $type->type);
     }
   }

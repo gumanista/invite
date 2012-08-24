@@ -113,8 +113,8 @@ function invite_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'invite_processor' => array(
-        'description' => 'Invite processor.',
+      'invite_sending_controller' => array(
+        'description' => 'Invite sending_controller.',
         'type' => 'varchar',
         'length' => 64,
         'not null' => TRUE,
@@ -137,7 +137,10 @@ function invite_schema() {
   return $schema;
 }
 
+/**
+ * Implements hook_install().
+ */
 function invite_install() {
   // Set default expiry time 30 days
-  variable_set('invite_default_expiry_time', 30 * 24 * 60 * 60);
+  variable_set('invite_default_expiry_time', 30);
 }

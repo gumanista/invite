@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Settings form for Invite By Mail
+ *
+ * @return array
+ */
 function invite_by_email_settings_form() {
   $form['invite_default_mail_subject'] = array(
     '#type' => 'textfield',
