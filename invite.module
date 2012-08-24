@@ -405,6 +405,36 @@ function invite_delete_multiple($invite_ids) {
 }
 
 /**
+ */
+/**
+ * Callback for getting properties of an Invite.
+ *
+ * @param Invite $entity
+ * @param array $options
+ * @param $name
+ * @param $entity_type
+ * @return string
+ */
+function invite_metadata_entity_get_properties($entity, array $options, $name, $entity_type) {
+  $invite = entity_metadata_wrapper('invite', $entity);
+  switch ($name) {
+    case 'invite_accept_link':
+      return 'invite/accept/' . $invite->reg_code->value();
+      break;
+    case 'invite_withdraw_link':
+      return 'invite/withdraw/' . $invite->reg_code->value();
+      break;
+    case 'invite_resend_link':
+      return 'invite/resend/' . $invite->reg_code->value();
+      break;
+  }
+//  if ($name == 'url') {
+//    $return = entity_uri($entity_type, $entity);
+//    return url($return['path'], $return['options'] + $options);
+//  }
+}
+
+/**
  * Load Invite Type.
  *
  * @param string $invite_type_name
@@ -460,3 +490,15 @@ function invite_type_delete($invite_type) {
 function invite_type_delete_multiple($invite_type_ids) {
   entity_delete_multiple('invite_type', $invite_type_ids);
 }
+
+/**
+ * Implementats hook_views_api().
+ */
+function invite_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'invite') . '/views',
+  );
+}
+
+

@@ -31,6 +31,11 @@ function invite_by_email_invite_sending_controller() {
   );
 }
 
+/**
+ * Creates new Invite entity type.
+ *
+ * @param InviteType $invite_type
+ */
 function invite_by_email_invite_type_create($invite_type) {
   $fields = array(
     'field_invitation_email_address' => array(
@@ -108,7 +113,7 @@ function invite_by_email_invite_type_create($invite_type) {
   );
 
   foreach ($fields as $field) {
-    $info = field_info_field($field['definition']['field_name']);
+    $info = field_info_field(array('field_name' => $field['definition']['field_name']));
     if (empty($info)) {
       field_create_field($field['definition']);
     }
@@ -117,6 +122,12 @@ function invite_by_email_invite_type_create($invite_type) {
   }
 }
 
+/**
+ * Verify could this invite be added or not.
+ *
+ * @param Invite $invite
+ * @return bool
+ */
 function invite_by_email_invite_validate($invite) {
   $validated = TRUE;
   if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {

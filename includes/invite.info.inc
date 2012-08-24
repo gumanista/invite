@@ -64,6 +64,33 @@ class InviteMetadataController extends EntityDefaultMetadataController {
       'description' => t('The time user have joined.'),
     ) + $properties['joined'];
 
+    $properties['invite_accept_link'] = array(
+      'label' => t('Invite action link: accept'),
+      'description' => t('Displays link for invite accepting.'),
+      'getter callback' => 'invite_metadata_entity_get_properties',
+      'type' => 'uri',
+      'computed' => TRUE,
+      'entity views field' => TRUE,
+    );
+
+    $properties['invite_withdraw_link'] = array(
+      'label' => t('Invite action link: withdrawn'),
+      'description' => t('Displays link for invite withdrawn.'),
+      'getter callback' => 'invite_metadata_entity_get_properties',
+      'type' => 'uri',
+      'computed' => TRUE,
+      'entity views field' => TRUE,
+    );
+
+    $properties['invite_resend_link'] = array(
+      'label' => t('Invite action link: resend'),
+      'description' => t('Displays link for invite resending.'),
+      'getter callback' => 'invite_metadata_entity_get_properties',
+      'type' => 'uri',
+      'computed' => TRUE,
+      'entity views field' => TRUE,
+    );
+
     return $info;
   }
 }
