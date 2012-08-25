@@ -110,8 +110,33 @@ function invite_notifications_invite_accept($invite) {
     $inviter = user_load($invite->uid);
     user_save($inviter, array('data' => array('notification_received' => TRUE)));
   }
-
-
 }
+
+/**
+ * Implements hook_entity_insert().
+ *
+ * @param Invite $invite
+ * @param $type
+ */
+function invite_notifications_entity_insert($invite, $type) {
+  global $user;
+  if (!empty($invite->invitee)) {
+    $message = array(
+      'iid' => $invite->iid,
+      'uid' => $invite->uid,
+      'inviter' => $invite->uid,
+      'invitee' => $invite->invitee,
+      'message_type' => 'registered_user_notification',
+    );
+
+    // Flag the inviting user, this triggers status notifications and
+    // saves us some queries otherwise.
+    if (drupal_write_record('invite_notifications', $message) == SAVED_NEW) {
+      $inviter = user_load($invite->uid);
+      user_save($inviter, array('data' => array('notification_received' => TRUE)));
+    }
+  }
+}
+
 
 

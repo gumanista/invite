@@ -522,7 +522,31 @@ function invite_views_api() {
   );
 }
 
-function invite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+function invite_form_user_login_alter(&$form, &$form_state, $form_id) {
+  $invite = invite_load_from_session();
+  if ($invite && !empty($invite->invitee)) {
+    $form['#invite'] = $invite;
+    $form['#submit'][] = 'invite_form_user_login_submit';
+  }
+}
+
+function invite_form_user_login_submit(&$form, &$form_state, $form_id) {
+  global $user;
+  if (!empty($form['#invite'])) {
+    $invite = $form['#invite'];
+    $account = user_load($user->uid);
+    $invite->joined = REQUEST_TIME;
+    entity_save('invite', $invite);
+
+    module_invoke_all('invite_accept', $invite, $account);
+
+    if (isset($_SESSION)) {
+      unset($_SESSION[INVITE_SESSION_CODE]);
+    }
+  }
+}
+
+  function invite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
 //  $invite = invite_load_from_session();
 //  dpm($invite);
 //  $invite = entity_metadata_wrapper('invite', $invite);
@@ -533,7 +557,9 @@ function invite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function invite_user_insert(&$edit, $account, $category) {
-  if ($invite = invite_load_from_session()) {
+  global $user;
+  $invite = invite_load_from_session();
+  if ($invite && empty($invite->invitee)) {
     $invite->invitee = $account->uid;
     $invite->joined = REQUEST_TIME;
     entity_save('invite', $invite);
@@ -543,7 +569,6 @@ function invite_user_insert(&$edit, $account, $category) {
     if (isset($_SESSION)) {
       unset($_SESSION[INVITE_SESSION_CODE]);
     }
-
   }
 }
 

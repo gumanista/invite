@@ -13,7 +13,6 @@ function invite_view($invite) {
 }
 
 /**
- * TODO: move to Invite class.
  * Invitation accept callback.
  *
  * @param Invite $invite
@@ -28,9 +27,23 @@ function invite_accept($invite) {
     $message = t('You could not use own invite.');
     $redirect = '<front>';
   }
-  elseif (!$user->uid && $invite->status() == INVITE_VALID) {
+  elseif (!$user->uid && (empty($invite->invitee)) && $invite->status() == INVITE_VALID) {
+    // Process new user invitation.
     $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
     $redirect = variable_get('invite_registration_path', 'user/register');
+  }
+  elseif (!empty($user->uid) && ($user->uid == $invite->invitee) && ($invite->status() == INVITE_VALID)) {
+    $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
+    $account = user_load($user->uid);
+    $inviter = $invite->inviter();
+    module_invoke_all('invite_accept', $invite, $account);
+    $message = t('You have accepted invitation from !user', array('!user' => theme('username', array('account' => $inviter))));
+    $redirect = 'user';
+  }
+  elseif (empty($user->uid) && !empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
+    $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
+    $message = t('You should login first to accept invite.');
+    $redirect = 'user/login';
   }
   else {
     switch ($invite->status()) {
