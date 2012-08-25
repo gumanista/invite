@@ -16,15 +16,9 @@ class InviteMetadataController extends EntityDefaultMetadataController {
     ) + $properties['type'];
 
     unset($properties['arguments']);
-    // Unset the uid property, as it is available via the user anyway.
+    // Unset the uid and invitee properties, as it is available via the user anyway.
     unset($properties['uid']);
-
-    $properties['join_link'] = array(
-      'label' => t("Join link"),
-      'type' => 'uri',
-      'description' => t("Link user should use for registration by invitation."),
-      'getter callback' => 'entity_property_getter_method',
-    );
+    unset($properties['invitee']);
 
     $properties['inviter'] = array(
       'label' => t("Inviter"),

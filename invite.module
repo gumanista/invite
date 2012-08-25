@@ -347,6 +347,31 @@ function invite_by_code_load($reg_code) {
 }
 
 /**
+ * Loads Invite using information stored in session.
+ *
+ * @param string $reg_code
+ * @return Invite
+ */
+function invite_load_from_session() {
+  if (isset($_SESSION[INVITE_SESSION_CODE])) {
+    $invite = invite_by_code_load($_SESSION[INVITE_SESSION_CODE]);
+  }
+  // Legacy url support (user/register/regcode).
+  elseif (arg(0) == 'user' && arg(1) == 'register' && $reg_code = arg(2)) {
+    if ($invite = invite_by_code_load($reg_code)) {
+      $_SESSION[INVITE_SESSION_CODE] = $invite->reg_code;
+    }
+  }
+
+  if (!empty($invite)) {
+    return $invite;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Loads Invite by Id.
  *
  * @param int $iid
@@ -428,10 +453,6 @@ function invite_metadata_entity_get_properties($entity, array $options, $name, $
       return 'invite/resend/' . $invite->reg_code->value();
       break;
   }
-//  if ($name == 'url') {
-//    $return = entity_uri($entity_type, $entity);
-//    return url($return['path'], $return['options'] + $options);
-//  }
 }
 
 /**
@@ -499,6 +520,87 @@ function invite_views_api() {
     'api' => 3,
     'path' => drupal_get_path('module', 'invite') . '/views',
   );
+}
+
+function invite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+//  $invite = invite_load_from_session();
+//  dpm($invite);
+//  $invite = entity_metadata_wrapper('invite', $invite);
+//  dpm($invite->inviter->roles->value());
+//  dpm(user_roles(TRUE, 'send invitations'));
+//  global $user;
+//  dpm($user);
+}
+
+function invite_user_insert(&$edit, $account, $category) {
+  if ($invite = invite_load_from_session()) {
+    $invite->invitee = $account->uid;
+    $invite->joined = REQUEST_TIME;
+    entity_save('invite', $invite);
+
+    module_invoke_all('invite_accept', $invite, $account);
+
+    if (isset($_SESSION)) {
+      unset($_SESSION[INVITE_SESSION_CODE]);
+    }
+
+  }
+}
+
+/**
+ * Implements hook_user_presave().
+ */
+function invite_user_presave(&$edit, $account, $category) {
+  if ($account->is_new && !empty($account->mail)) {
+    $invite = invite_load_from_session();
+
+    if ($invite) {
+      $roles = invite_target_roles($invite, $edit);
+
+      if ($roles) {
+        if (!isset($edit['roles']) || !is_array($edit['roles'])) {
+          $edit['roles'] = array();
+        }
+        foreach ($roles as $role) {
+          $edit['roles'][$role] = $role;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Determine target roles based on the roles of an inviter.
+ *
+ * @param Invite $invite
+ *   An invite object.
+ * @param $accout
+ *   The user for whom the role is being determined.
+ * @return
+ *   Array of target roles for an invited user.
+ */
+function invite_target_roles($invite, $account) {
+  $targets = array();
+
+  $invite = entity_metadata_wrapper('invite', $invite);
+  $inviter = user_load($invite->inviter->uid->value());
+  // Add roles of inviter.
+  $roles = array_intersect($inviter->roles, user_roles(TRUE, 'send invitations'));
+
+  // Add a dummy entry to retrieve the default target role setting.
+  $roles['default'] = 'default';
+
+  // Map to configured target roles.
+  foreach ($roles as $rid => $role) {
+    $target = variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID);
+    if ($target != DRUPAL_AUTHENTICATED_RID) {
+      $targets[$target] = $target;
+    }
+  }
+
+  module_invoke_all('invite_target_roles', $targets, $invite, $account);
+
+  return $targets;
 }
 
 

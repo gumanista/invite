@@ -288,3 +288,20 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
     $form['actions']['submit']['#value'] = t('Send Invitation');
   }
 }
+
+function invite_by_email_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+  if ($invite = invite_load_from_session()) {
+    $invite_wrapper = entity_metadata_wrapper('invite', $invite);
+
+    if (isset($form['account'])) {
+      $field = &$form['account'];
+    }
+    else {
+      $field = &$form;
+    }
+    if (isset($field['mail'])) {
+      $field['mail']['#default_value'] = $invite_wrapper->field_invitation_email_address->value();
+    }
+  }
+}
