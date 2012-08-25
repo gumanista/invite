@@ -6,7 +6,7 @@ function invite_by_email_install() {
 
 To become a member of [site:name], click the link below or paste it into the address bar of your browser.
 
-[invite:join-link]
+[invite:invite-accept-link]
 TEMPLATE
   ));
 

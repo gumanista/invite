@@ -87,7 +87,7 @@ function invite_menu() {
   $items['invite/add'] = array(
     'title' => 'Add Invite',
     'page callback' => 'invite_admin_add_page',
-    'access arguments' => array('administer invite entities'),
+    'access arguments' => array('create invites'),
     'file' => 'includes/invite.admin.inc',
     'type' => MENU_LOCAL_ACTION,
     'tab_parent' => 'invite',
@@ -229,6 +229,9 @@ function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
       return user_access('administer invite entities')
         || user_access('edit any invite entities')
         || (user_access('edit own invite entities') && ($invite->uid == $account->uid));
+    case 'withdraw':
+      return user_access('withdraw invitations')
+        || (user_access('edit own invite entities') && ($invite->invitee == $account->uid));
   }
 }
 
@@ -279,25 +282,45 @@ function invite_permission() {
       'description' => t('Allows users to configure invite types and their fields.'),
       'restrict access' => TRUE,
     ),
+
     'create invite entities' => array(
       'title' => t('Create invites'),
       'description' => t('Allows users to create invites.'),
-      'restrict access' => TRUE,
+      'restrict access' => FALSE,
     ),
     'view invite entities' => array(
       'title' => t('View invites'),
       'description' => t('Allows users to view invites.'),
       'restrict access' => TRUE,
     ),
+
+    'view own invite entities' => array(
+      'title' => t('View own invites'),
+      'description' => t('Allows users to view invites.'),
+      'restrict access' => TRUE,
+    ),
+
     'edit any invite entities' => array(
       'title' => t('Edit any invites'),
       'description' => t('Allows users to edit any invites.'),
       'restrict access' => TRUE,
     ),
+
     'edit own invite entities' => array(
       'title' => t('Edit own invites'),
       'description' => t('Allows users to edit own invites.'),
-      'restrict access' => TRUE,
+      'restrict access' => FALSE,
+    ),
+
+    'withdraw own invitations' => array(
+      'title' => t('Withdraw own invitations'),
+      'description' => t('Allows users to withdraw own invitations.'),
+      'restrict access' => FALSE,
+    ),
+    'withdraw own accepted invitations' => array(
+      'title' => t('Withdraw own accepted invitations'),
+      'description' => t('Allows users to edit own invites.'),
+      'restrict access' => FALSE,
     ),
   );
   return $permissions;
@@ -519,8 +542,10 @@ function invite_type_delete_multiple($invite_type_ids) {
  * Implementats hook_views_api().
  */
 function invite_views_api() {
+  dpm(1233333);
+  dpm(debug_backtrace());
   return array(
-    'api' => 3,
+    'api' => '3.0',
     'path' => drupal_get_path('module', 'invite') . '/views',
   );
 }
