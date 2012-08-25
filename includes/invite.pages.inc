@@ -8,7 +8,6 @@
  */
 function invite_view($invite) {
   drupal_set_title(entity_label('invite', $invite));
-  dpm(entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full'));
   return entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full');
 }
 
@@ -133,9 +132,11 @@ function invite_withdraw_form_submit($form, &$form_state) {
     ->condition('reg_code', $invite->reg_code)
     ->execute();
 
-  drupal_set_message(t('Invitation to %email has been withdrawn.', array('%email' => $invite->email)));
+  drupal_set_message(t('!invite has been withdrawn.', array('!invite' => l('Invitation', 'invite/' . $invite->iid))));
 
   // Notify other modules.
   module_invoke_all('invite_withdraw', $invite);
+
+  drupal_goto('<front>');
 }
 

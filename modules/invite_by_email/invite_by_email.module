@@ -113,7 +113,7 @@ function invite_by_email_invite_type_create($invite_type) {
   );
 
   foreach ($fields as $field) {
-    $info = field_info_field(array('field_name' => $field['definition']['field_name']));
+    $info = field_read_field(array('field_name' => $field['definition']['field_name']));
     if (empty($info)) {
       field_create_field($field['definition']);
     }
@@ -285,6 +285,13 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
     $language_subject = $form['field_invitation_email_subject']['#language'];
     $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
     $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_template', '');
+    if (!variable_get('invite_message_editable', FALSE)) {
+      $form['field_invitation_email_subject']['#type'] = 'hidden';
+      $form['field_invitation_email_body']['#type'] = 'hidden';
+    }
+    else {
+    }
+
     $form['actions']['submit']['#value'] = t('Send Invitation');
   }
 }

@@ -452,6 +452,9 @@ function invite_metadata_entity_get_properties($entity, array $options, $name, $
     case 'invite_resend_link':
       return 'invite/resend/' . $invite->reg_code->value();
       break;
+    case 'status':
+      return $entity->status(TRUE);
+      break;
   }
 }
 
@@ -484,12 +487,12 @@ function invite_get_types($type_name = NULL) {
 function invite_type_save($invite_type) {
   entity_save('invite_type', $invite_type);
 
-  if (variable_get($invite_type->type . '_' . $invite_type->invite_sending_controller, FALSE)) {
+  if (!variable_get($invite_type->type . '_' . $invite_type->invite_sending_controller . '_processed', FALSE)) {
     $function = $invite_type->invite_sending_controller . '_invite_type_create';
     if (function_exists($function)) {
       $function($invite_type);
     }
-    variable_set($invite_type->type . '_' . $invite_type->invite_sending_controller, TRUE);
+    variable_set($invite_type->type . '_' . $invite_type->invite_sending_controller . '_processed', TRUE);
   }
 }
 
@@ -530,7 +533,7 @@ function invite_form_user_login_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-function invite_form_user_login_submit(&$form, &$form_state, $form_id) {
+function invite_form_user_login_submit(&$form, &$form_state) {
   global $user;
   if (!empty($form['#invite'])) {
     $invite = $form['#invite'];

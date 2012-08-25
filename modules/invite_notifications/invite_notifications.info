@@ -6,5 +6,4 @@ files[] = invite_notifications.module
 
 ;configure = admin/config/people/invite
 
-;dependencies[] = entity
-;dependencies[] = ctools
+dependencies[] = invite

@@ -23,9 +23,25 @@ class InviteController extends EntityAPIController {
     return parent::create($values);
   }
 
+  /**
+   * @param Invite $entity
+   * @param string $view_mode
+   * @param null $langcode
+   * @param array $content
+   * @return mixed
+   */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $wrapper = entity_metadata_wrapper('invite', $entity);
-    $content['author'] = array('#markup' => t('Created by: !author', array('!author' => $wrapper->uid->name->value(array('sanitize' => TRUE)))));
+    $content['author'] = array(
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+      '#markup' => t('Created by: <strong>!author</strong>', array('!author' => $wrapper->uid->name->value(array('sanitize' => TRUE))))
+    );
+    $content['status'] = array(
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+      '#markup' => t('Status: <strong>!status</strong>', array('!status' => $entity->status(TRUE)))
+    );
 
     return parent::buildContent($entity, $view_mode, $langcode, $content);
   }
@@ -88,6 +104,18 @@ class Invite extends Entity {
     return user_load($this->uid);
   }
 
+  /**
+   * Returns the user owning this profile.
+   */
+  public function invitee() {
+    if (!empty($this->invitee)) {
+      return user_load($this->invitee);
+    }
+    else {
+      return FALSE;
+    }
+  }
+
   public function joinLink() {
     return url('invite/accept/' . $this->reg_code, array('absolute' => TRUE));
   }
@@ -129,18 +157,18 @@ class Invite extends Entity {
     parent::__construct($values, 'invite');
   }
 
-  public function status() {
+  public function status($readable = FALSE) {
     if (!$this || $this->canceled != 0) {
-      return INVITE_WITHDRAWN;
+      return $readable ? 'withdrawn' : INVITE_WITHDRAWN;
     }
     elseif ($this->joined != 0) {
-      return INVITE_USED;
+      return $readable ? t('used') : INVITE_USED;
     }
     elseif ($this->expiry < REQUEST_TIME) {
-      return INVITE_EXPIRED;
+      return $readable ? t('expired') : INVITE_EXPIRED;
     }
     else {
-      return INVITE_VALID;
+      return $readable ? t('valid') : INVITE_VALID;
     }
   }
 

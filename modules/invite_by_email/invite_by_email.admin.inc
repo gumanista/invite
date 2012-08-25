@@ -6,19 +6,19 @@
  * @return array
  */
 function invite_by_email_settings_form() {
+  $form['invite_message_editable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Editable subject'),
+    '#description' => t('Choose whether users should be able to customize the subject.'),
+    '#default_value' => variable_get('invite_message_editable', FALSE),
+  );
+
   $form['invite_default_mail_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
     '#default_value' => variable_get('invite_default_mail_subject', t('[invite:inviter:name] has sent you an invite!')),
     '#description' => t('Type the default subject of the invitation e-mail.') . ' ' . t('Use the syntax [token] if you want to insert a replacement pattern.'),
     '#required' => TRUE,
-  );
-
-  $form['invite_subject_editable'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Editable subject'),
-    '#description' => t('Choose whether users should be able to customize the subject.'),
-    '#default_value' => variable_get('invite_subject_editable', FALSE),
   );
 
   $form['invite_default_mail_template'] = array(

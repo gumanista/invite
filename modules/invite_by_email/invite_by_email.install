@@ -25,27 +25,26 @@ TEMPLATE
   foreach ($types as $type) {
     $type = entity_create('invite_type', $type);
     $type->save();
-    $function = 'invite_by_email_invite_type_create';
-    if (function_exists($function)) {
-      $function($type);
-    }
   }
 }
 
 function invite_by_email_uninstall() {
-  $types = invite_get_types();
-  foreach ($types as $type) {
-    if (!empty($type->invite_sending_controller) && $type->invite_sending_controller == 'invite_by_email') {
-      entity_delete('invite_type', $type->type);
+  if (module_exists('invite')) {
+    $types = entity_load_multiple_by_name('invite_type');
+    $types = isset($type_name) ? reset($types) : $types;
+    foreach ($types as $type) {
+      if (!empty($type->invite_sending_controller) && $type->invite_sending_controller == 'invite_by_email') {
+        entity_delete('invite_type', $type->type);
+      }
     }
-  }
 
-  $fields = array(
-    'field_invitation_email_address',
-    'field_invitation_email_subject',
-    'field_invitation_email_body',
-  );
-  foreach ($fields as $field) {
-    field_delete_field($field);
+    $fields = array(
+      'field_invitation_email_address',
+      'field_invitation_email_subject',
+      'field_invitation_email_body',
+    );
+    foreach ($fields as $field) {
+      field_delete_field($field);
+    }
   }
 }
