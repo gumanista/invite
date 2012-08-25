@@ -542,8 +542,6 @@ function invite_type_delete_multiple($invite_type_ids) {
  * Implementats hook_views_api().
  */
 function invite_views_api() {
-  dpm(1233333);
-  dpm(debug_backtrace());
   return array(
     'api' => '3.0',
     'path' => drupal_get_path('module', 'invite') . '/views',
@@ -574,14 +572,7 @@ function invite_form_user_login_submit(&$form, &$form_state) {
   }
 }
 
-  function invite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
-//  $invite = invite_load_from_session();
-//  dpm($invite);
-//  $invite = entity_metadata_wrapper('invite', $invite);
-//  dpm($invite->inviter->roles->value());
-//  dpm(user_roles(TRUE, 'send invitations'));
-//  global $user;
-//  dpm($user);
+function invite_form_user_register_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function invite_user_insert(&$edit, $account, $category) {

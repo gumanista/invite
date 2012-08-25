@@ -1,12 +1,9 @@
 <?php
 
-dpm(3245);
-
 /**
  * Implements hook_views_default_views().
  */
 function invite_views_default_views() {
-  dpm(123);
   $module_name = 'invite';
   $views = array();
   $path = drupal_get_path('module', $module_name) . '/views';
