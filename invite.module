@@ -201,6 +201,20 @@ function invite_menu() {
     'file' => 'includes/invite.pages.inc',
   );
 
+  if (variable_get('invite_version_updated', TRUE)) {
+    $items['admin/config/people/invite/migrate'] = array(
+      'title' => 'Migrate',
+      'description' => 'Migrate version 2.x invites.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('invite_migrate_form'),
+      'access arguments' => array('administer invitations'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 20,
+      'file' => 'includes/invite.admin.inc',
+    );
+
+  }
+
   return $items;
 }
 

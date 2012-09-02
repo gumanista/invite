@@ -120,7 +120,7 @@ function invite_notifications_invite_accept($invite) {
  */
 function invite_notifications_entity_insert($invite, $type) {
   global $user;
-  if (!empty($invite->invitee)) {
+  if (!empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
     $message = array(
       'iid' => $invite->iid,
       'uid' => $invite->uid,

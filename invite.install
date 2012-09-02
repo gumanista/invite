@@ -144,3 +144,22 @@ function invite_install() {
   // Set default expiry time 30 days
   variable_set('invite_default_expiry_time', 30);
 }
+
+/**
+ * Implements update from 2.x version to 4.x
+ */
+function invite_update_7400() {
+  $schema = invite_schema();
+  db_rename_table('invite', 'invite_2x');
+  db_rename_table('invite_notifications', 'invite_notifications_2x');
+
+  // Create tables.
+  db_create_table('invite_type', $schema['invite_type']);
+  db_create_table('invite', $schema['invite']);
+
+  // We unable move the data because invite_by_email should be installed.
+  // So all data transfer will be moved
+  variable_set('invite_version_updated', TRUE);
+
+  drupal_set_message(t('Invite was successfully installed. You could migrate !link.', array('!link' => l('old invites', 'admin/config/people/invite/migrate'))));
+}

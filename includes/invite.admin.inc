@@ -352,3 +352,119 @@ function invite_settings_form() {
 
   return system_settings_form($form);
 }
+
+function invite_migrate_form() {
+  $form = array();
+  $migration_possible = TRUE;
+
+  // Check prerequisites.
+  $available_types = array(
+    'none' => '- Please select -',
+  );
+  $invite_types = invite_get_types();
+  foreach ($invite_types as $name => $type) {
+    if ($type->invite_sending_controller == 'invite_by_email') {
+      $available_types[$name] = $type->label;
+    }
+  }
+
+  if (!module_exists('invite_by_email')) {
+    drupal_set_message(t('You should enable Invite by e-mail module.'), 'error');
+    $migration_possible = FALSE;
+  }
+
+  if (!module_exists('invite_notifications')) {
+    drupal_set_message(t('You should enable Invite Notifications module.'), 'error');
+    $migration_possible = FALSE;
+  }
+
+  if ($migration_possible) {
+    $form['type'] = array(
+      '#title' => t('Choose type'),
+      '#description' => t('Select an Invite type which will be used to import old invites.'),
+      '#type' => 'select',
+      '#options' => $available_types,
+      '#default_value' => 'none',
+    );
+
+    $form['drop_old_tables'] = array(
+      '#title' => t('Drop old tables'),
+      '#description' => t('Drop tables from Invite 2.x module after migration is completed.'),
+      '#type' => 'checkbox',
+      '#default_value' => TRUE,
+    );
+
+    $form['actions'] = array(
+      '#type' => 'actions'
+    );
+
+    $form['actions']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Migrate'),
+    );
+  }
+  else {
+    $form['message'] = array(
+      '#markup' => t('Migration is impossible, please fix errors mentioned above.'),
+    );
+  }
+
+  return $form;
+}
+
+function invite_migrate_form_validate($form, &$form_state) {
+  if ($form_state['values']['type'] == 'none') {
+    form_set_error('type', t('Please choose an Invite type.'));
+  }
+  else {
+    // TODO: add field mapping to the form.
+    $needed_fields = array(
+      'field_invitation_email_address',
+      'field_invitation_email_subject',
+      'field_invitation_email_body',
+    );
+    $verified_fields = 0;
+    foreach(field_info_instances('invite', 'invite_by_email') as $field_name => $field) {
+      if (in_array($field_name, $needed_fields)) {
+        $verified_fields++;
+      }
+    }
+    if ($verified_fields != count($needed_fields)) {
+      form_set_error('type', t('This content type couldn\'t be used.'));
+    }
+  }
+}
+
+function invite_migrate_form_submit($form, &$form_state) {
+  if ($form_state['values']['submit'] == t('Migrate')) {
+    // Move invites.
+    $result = db_select('invite_2x', 'i2x')
+      ->fields('i2x')
+      ->execute();
+    foreach ($result as $record) {
+      $invite_data = array(
+        'type' => $form_state['values']['type'],
+        'reg_code' => $record->reg_code,
+        'uid' => $record->uid,
+        'invitee' => $record->invitee,
+        'created' => $record->created,
+        'expiry' => $record->expiry,
+        'joined' => $record->joined,
+        'canceled' => $record->canceled,
+        'data' => $record->data,
+      );
+      $invite = new Invite($invite_data);
+      $invite->field_invitation_email_address[LANGUAGE_NONE][0]['value'] = $record->email;
+      $data = unserialize($record->data);
+      $invite->field_invitation_email_subject[LANGUAGE_NONE][0]['value'] = $data['subject'];
+      $invite->field_invitation_email_body[LANGUAGE_NONE][0]['value'] = $data['message'];
+      $invite->sendNotification = FALSE;
+      $invite->save();
+    }
+
+    if ($form_state['values']['drop_old_tables']) {
+//      db_drop_table('invite_2x');
+//      db_drop_table('invite_notifications_2x');
+    }
+  }
+}
