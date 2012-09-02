@@ -186,21 +186,26 @@ function invite_by_email_entity_presave($invite, $type) {
   }
 }
 
+/**
+ * @param Invite $invite
+ */
+function invite_by_email_invite_send($invite) {
+  if ($invite->type_details()->invite_sending_controller == 'invite_by_email') {
+
+  }
+}
+
+/**
+ * @param Invite $invite
+ * @param $type
+ */
 function invite_by_email_entity_insert($invite, $type) {
   if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {
     $entity = entity_metadata_wrapper('invite', $invite);
     $mail = $entity->field_invitation_email_address->value();
     if ($account = user_load_by_mail($mail)) {
       // User already exists in system.
-
-    }
-
-    // TODO: move to Invite module.
-    if ($invite->sendInvite()) {
-      drupal_set_message(t('Message was sent'));
-    }
-    else {
-      drupal_set_message(t('Failed to send a message.'), 'error');
+      // TODO: add additional handling for existent users.
     }
   }
 }

@@ -45,6 +45,7 @@ class InviteController extends EntityAPIController {
 
     return parent::buildContent($entity, $view_mode, $langcode, $content);
   }
+
 }
 
 class InviteTypeController extends EntityAPIControllerExportable {
@@ -122,6 +123,7 @@ class Invite extends Entity {
 
   public function sendInvite() {
     $result = FALSE;
+    // TODO: implement multiple controllers handling.
     $function = $this->type_details()->invite_sending_controller . '_send_invitation';
     if (!empty($this->sendNotification)) {
       if (function_exists($function) && $function($this)) {
@@ -158,6 +160,7 @@ class Invite extends Entity {
       // have that as interim label.
       $values['label'] = $type->label;
     }
+    $this->sendNotification = TRUE;
 
     parent::__construct($values, 'invite');
   }
@@ -189,6 +192,7 @@ class Invite extends Entity {
   public function save() {
     return parent::save();
   }
+
 }
 
 /**

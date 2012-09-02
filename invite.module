@@ -467,6 +467,20 @@ function invite_delete_multiple($invite_ids) {
 }
 
 /**
+ * Implements hook_insert().
+ *
+ * @param Invite $entity
+ */
+function invite_invite_insert($entity) {
+  if ($entity->sendInvite()) {
+    drupal_set_message(t('Invitation was sent'));
+  }
+  else {
+    drupal_set_message(t('Failed to send a message.'), 'error');
+  }
+}
+
+/**
  */
 /**
  * Callback for getting properties of an Invite.
