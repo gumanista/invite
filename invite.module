@@ -493,13 +493,13 @@ function invite_metadata_entity_get_properties($entity, array $options, $name, $
   $invite = entity_metadata_wrapper('invite', $entity);
   switch ($name) {
     case 'invite_accept_link':
-      return 'invite/accept/' . $invite->reg_code->value();
+      return url('invite/accept/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
     case 'invite_withdraw_link':
-      return 'invite/withdraw/' . $invite->reg_code->value();
+      return url('invite/withdraw/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
     case 'invite_resend_link':
-      return 'invite/resend/' . $invite->reg_code->value();
+      return url('invite/resend/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
     case 'status':
       return $entity->status(TRUE);
