@@ -72,47 +72,23 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
     ),
   );
 
-  $form['invite_by_email']['mail_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => variable_get(_invite_by_email_variable_name('mail_subject', $invite_type), variable_get('invite_default_mail_subject', '')),
-    '#description' => t('Type the default subject of the invitation e-mail.') . ' ' . t('Use the syntax [token] if you want to insert a replacement pattern.'),
-    '#states' => array(
-      'invisible' => array(
-        ':input[name="use_default"]' => array('checked' => TRUE),
-      ),
-    ),
-  );
-
-  $form['invite_by_email']['mail_template'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Mail template'),
-    '#default_value' => variable_get(_invite_by_email_variable_name('mail_template', $invite_type), variable_get('invite_default_mail_template', '')),
-    '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
-    '#states' => array(
-      'invisible' => array(
-        ':input[name="use_default"]' => array('checked' => TRUE),
-      ),
-    ),
-  );
-
-  if (module_exists('token')) {
-    $form['invite_by_email']['token_help'] = array(
-      '#title' => t('Replacement patterns'),
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#states' => array(
-        'invisible' => array(
-          ':input[name="use_default"]' => array('checked' => TRUE),
-        ),
-      ),
-    );
-
-    $form['invite_by_email']['token_help']['help'] = array(
-      '#markup' => theme('token_tree', array('token_types' => array('user', 'profile', 'invite'))),
-    );
-  }
+//  if (module_exists('token')) {
+//    $form['invite_by_email']['token_help'] = array(
+//      '#title' => t('Replacement patterns'),
+//      '#type' => 'fieldset',
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//      '#states' => array(
+//        'invisible' => array(
+//          ':input[name="use_default"]' => array('checked' => TRUE),
+//        ),
+//      ),
+//    );
+//
+//    $form['invite_by_email']['token_help']['help'] = array(
+//      '#markup' => theme('token_tree', array('token_types' => array('user', 'profile', 'invite'))),
+//    );
+//  }
 
   $form['#submit'][] = 'invite_by_email_form_invite_type_form_submit';
 }
@@ -124,7 +100,7 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
  * @param $form_state
  */
 function invite_by_email_form_invite_type_form_submit(&$form, &$form_state) {
-  if ($form_state['values']['invite_sending_controller'] == 'invite_by_mail') {
+  if ($form_state['values']['invite_sending_controller'] == 'invite_by_email') {
     if (empty($form['#invite_type'])) {
       $invite_type = $form['#invite_type'];
     }
@@ -133,8 +109,6 @@ function invite_by_email_form_invite_type_form_submit(&$form, &$form_state) {
     }
     variable_set(_invite_by_email_variable_name('use_default', $invite_type), $form_state['values']['use_default']);
     variable_set(_invite_by_email_variable_name('message_editable', $invite_type), $form_state['values']['message_editable']);
-    variable_set(_invite_by_email_variable_name('mail_subject', $invite_type), $form_state['values']['mail_subject']);
-    variable_set(_invite_by_email_variable_name('mail_template', $invite_type), $form_state['values']['mail_template']);
   }
 }
 
@@ -395,17 +369,22 @@ function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) 
   $invite = $form['#entity'];
   if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {
     $language_subject = $form['field_invitation_email_subject']['#language'];
+    // Force fill with defaults if needed.
     if (variable_get(_invite_by_email_variable_name('use_default', $invite->type_details()), TRUE)) {
       $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
       $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_template', '');
     }
-    else {
-      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get(_invite_by_email_variable_name('mail_subject', $invite->type_details()), TRUE);
-      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get(_invite_by_email_variable_name('mail_template', $invite->type_details()), TRUE);
+    // Fill Subject and Body if they left empty.
+    if (empty($form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'])) {
+      $form['field_invitation_email_subject'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_subject', '');
     }
+    if (empty($form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'])) {
+      $form['field_invitation_email_body'][$language_subject][0]['value']['#default_value'] = variable_get('invite_default_mail_template', '');
+    }
+    // Hide if message is not editable.
     $message_editable = variable_get(_invite_by_email_variable_name('use_default', $invite->type_details()), TRUE) ?
-      variable_get(_invite_by_email_variable_name('message_editable', $invite->type_details()), FALSE) :
-      variable_get('invite_message_editable', FALSE);
+      variable_get('invite_message_editable', FALSE) :
+      variable_get(_invite_by_email_variable_name('message_editable', $invite->type_details()), FALSE);
     if (!$message_editable) {
       $form['field_invitation_email_subject']['#type'] = 'hidden';
       $form['field_invitation_email_body']['#type'] = 'hidden';

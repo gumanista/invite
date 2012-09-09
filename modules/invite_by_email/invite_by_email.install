@@ -24,7 +24,7 @@ TEMPLATE
 
   foreach ($types as $type) {
     $type = entity_create('invite_type', $type);
-    $type->save();
+    invite_type_save($type);
   }
 }
 
@@ -35,6 +35,7 @@ function invite_by_email_uninstall() {
     foreach ($types as $type) {
       if (!empty($type->invite_sending_controller) && $type->invite_sending_controller == 'invite_by_email') {
         entity_delete('invite_type', $type->type);
+        variable_del('invite_type_' . $type->type . '_' . $type->invite_sending_controller . '_processed');
       }
     }
 

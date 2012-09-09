@@ -535,13 +535,12 @@ function invite_get_types($type_name = NULL) {
  */
 function invite_type_save($invite_type) {
   entity_save('invite_type', $invite_type);
-
-  if (!variable_get($invite_type->type . '_' . $invite_type->invite_sending_controller . '_processed', FALSE)) {
+  if (!variable_get('invite_type_' . $invite_type->type . '_' . $invite_type->invite_sending_controller . '_processed', FALSE)) {
     $function = $invite_type->invite_sending_controller . '_invite_type_create';
     if (function_exists($function)) {
       $function($invite_type);
     }
-    variable_set($invite_type->type . '_' . $invite_type->invite_sending_controller . '_processed', TRUE);
+    variable_set('invite_type_' . $invite_type->type . '_' . $invite_type->invite_sending_controller . '_processed', TRUE);
   }
 }
 

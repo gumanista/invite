@@ -140,6 +140,21 @@ function invite_install() {
 }
 
 /**
+ * Implements hook_install().
+ */
+function invite_uninstall() {
+  // Set default expiry time 30 days
+  variable_del('invite_default_expiry_time');
+  $variables = db_select('variable')
+    ->fields('v')
+    ->condition('name', 'invite_type_%', 'LIKE')
+    ->execute();
+  foreach ($variables as $variable) {
+    variable_del($variable->name);
+  }
+}
+
+/**
  * Implements update from 2.x version to 4.x
  */
 function invite_update_7400() {
