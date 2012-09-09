@@ -53,6 +53,7 @@ class InviteTypeController extends EntityAPIControllerExportable {
     $values += array(
       'label' => '',
       'description' => '',
+      'data' => array(),
     );
     return parent::create($values);
   }

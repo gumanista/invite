@@ -15,6 +15,8 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
     $invite_type->type = '';
   }
 
+  $form['#invite_type'] = $invite_type;
+
   $invite_sending_controllers = array();
   foreach (module_implements('invite_sending_controller') as $module) {
     $sending_controller = module_invoke($module, 'invite_sending_controller');
