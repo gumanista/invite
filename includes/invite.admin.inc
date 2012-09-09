@@ -14,15 +14,7 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
     $invite_type->label .= ' (cloned)';
     $invite_type->type = '';
   }
-//  // Load all plugins type "operation".
-//  ctools_include('plugins');
-//  $operations = ctools_get_plugins('invite', 'invite_type');
-//
-//  $operation_options = array();
-//  foreach ($operations as $id => $operation) {
-//    $operation_options[$id] = $operation['label'];
-//  }
-//
+
   $invite_sending_controllers = array();
   foreach (module_implements('invite_sending_controller') as $module) {
     $sending_controller = module_invoke($module, 'invite_sending_controller');
@@ -195,12 +187,6 @@ function invite_add($type) {
 function invite_form($form, &$form_state, $invite) {
   $form_state['invite'] = $invite;
 
-//  $form['description'] = array(
-//    '#type' => 'textarea',
-//    '#title' => t('Description'),
-//    '#default_value' => $invite->description,
-//  );
-
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $invite->uid,
@@ -353,6 +339,11 @@ function invite_settings_form() {
   return system_settings_form($form);
 }
 
+/**
+ * Migration form.
+ *
+ * @return array
+ */
 function invite_migrate_form() {
   $form = array();
   $migration_possible = TRUE;
@@ -412,6 +403,12 @@ function invite_migrate_form() {
   return $form;
 }
 
+/**
+ * Implements validation for migration form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function invite_migrate_form_validate($form, &$form_state) {
   if ($form_state['values']['type'] == 'none') {
     form_set_error('type', t('Please choose an Invite type.'));
@@ -435,6 +432,12 @@ function invite_migrate_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Implements sumit handler for migration.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function invite_migrate_form_submit($form, &$form_state) {
   if ($form_state['values']['submit'] == t('Migrate')) {
     // Move invites.

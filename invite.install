@@ -68,17 +68,6 @@ function invite_schema() {
         'type' => 'text',
         'not null' => TRUE,
       ),
-//      'subject' => array(
-//        'description' => 'The title of the invite.',
-//        'type' => 'varchar',
-//        'length' => 255,
-//        'not null' => TRUE,
-//        'default' => '',
-//      ),
-//      'message' => array(
-//        'description' => 'invite description.',
-//        'type' => 'text',
-//      ),
     ),
     'primary key' => array('iid'),
     'indexes' => array(
@@ -126,6 +115,11 @@ function invite_schema() {
         'not null' => TRUE,
         'size' => 'medium',
         'translatable' => TRUE,
+      ),
+      'data' => array(
+        'description' => 'Stores auxiliary data.',
+        'type' => 'text',
+        'not null' => TRUE,
       ),
     ) + entity_exportable_schema_fields(),
     'primary key' => array('id'),
