@@ -487,6 +487,8 @@ function invite_migrate_process($values, &$context) {
   }
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+  else {
     if ($values['drop_old_tables']) {
       db_drop_table('invite_2x');
       db_drop_table('invite_notifications_2x');
