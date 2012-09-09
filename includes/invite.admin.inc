@@ -442,34 +442,54 @@ function invite_migrate_form_validate($form, &$form_state) {
  */
 function invite_migrate_form_submit($form, &$form_state) {
   if ($form_state['values']['submit'] == t('Migrate')) {
-    // Move invites.
-    $result = db_select('invite_2x', 'i2x')
-      ->fields('i2x')
-      ->execute();
-    foreach ($result as $record) {
-      $invite_data = array(
-        'type' => $form_state['values']['type'],
-        'reg_code' => $record->reg_code,
-        'uid' => $record->uid,
-        'invitee' => $record->invitee,
-        'created' => $record->created,
-        'expiry' => $record->expiry,
-        'joined' => $record->joined,
-        'canceled' => $record->canceled,
-        'data' => $record->data,
-      );
-      $invite = new Invite($invite_data);
-      $invite->field_invitation_email_address[LANGUAGE_NONE][0]['value'] = $record->email;
-      $data = unserialize($record->data);
-      $invite->field_invitation_email_subject[LANGUAGE_NONE][0]['value'] = $data['subject'];
-      $invite->field_invitation_email_body[LANGUAGE_NONE][0]['value'] = $data['message'];
-      $invite->sendNotification = FALSE;
-      $invite->save();
-    }
+    $batch = array(
+      'title' => t('Migrating'),
+      'operations' => array(
+        array('invite_migrate_process', array($form_state['values'])),
+      ),
+      'file' => drupal_get_path('module', 'invite') . '/includes/invite.admin.inc'
+    );
+    batch_set($batch);
+    batch_process();
+  }
+}
 
-    if ($form_state['values']['drop_old_tables']) {
-//      db_drop_table('invite_2x');
-//      db_drop_table('invite_notifications_2x');
+function invite_migrate_process($values, &$context) {
+  $query = db_select('invite_2x', 'i2x')
+    ->fields('i2x');
+  if (empty($context['sandbox'])) {
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['max'] = $query->countQuery()->execute()->fetchField();
+  }
+  $limit = 20;
+  $result = $query->range($context['sandbox']['progress'], $limit)->execute();
+  foreach ($result as $record) {
+    $invite_data = array(
+      'type' => $values['type'],
+      'reg_code' => $record->reg_code,
+      'uid' => $record->uid,
+      'invitee' => $record->invitee,
+      'created' => $record->created,
+      'expiry' => $record->expiry,
+      'joined' => $record->joined,
+      'canceled' => $record->canceled,
+      'data' => $record->data,
+    );
+    $invite = new Invite($invite_data);
+    $invite->field_invitation_email_address[LANGUAGE_NONE][0]['value'] = $record->email;
+    $data = unserialize($record->data);
+    $invite->field_invitation_email_subject[LANGUAGE_NONE][0]['value'] = $data['subject'];
+    $invite->field_invitation_email_body[LANGUAGE_NONE][0]['value'] = $data['message'];
+    $invite->sendNotification = FALSE;
+    $invite->save();
+
+    $context['sandbox']['progress']++;
+  }
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+    if ($values['drop_old_tables']) {
+      db_drop_table('invite_2x');
+      db_drop_table('invite_notifications_2x');
     }
   }
 }

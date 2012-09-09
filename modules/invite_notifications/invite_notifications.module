@@ -7,7 +7,7 @@ function invite_notifications_init() {
     return FALSE;
   }
 
-  if ($user->data['notification_received']) {
+  if (!empty($user->data['notification_received'])) {
     $result = db_query('SELECT * FROM {invite_notifications} WHERE uid = :uid and status = :status', array(
       ':uid' => $user->uid,
       ':status' => 1
