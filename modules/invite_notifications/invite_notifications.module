@@ -7,11 +7,13 @@ function invite_notifications_init() {
     return FALSE;
   }
 
-  if (!empty($user->data['notification_received'])) {
-    $result = db_query('SELECT * FROM {invite_notifications} WHERE uid = :uid and status = :status', array(
-      ':uid' => $user->uid,
-      ':status' => 1
-    ))->fetchAll();
+  if (isset($user->data['notification_received'])) {
+    $result = db_select('invite_notifications')
+      ->fields('invite_notifications')
+      ->condition('uid', $user->uid)
+      ->condition('status', 1)
+      ->execute()
+      ->fetchAll();
     foreach ($result as $row) {
       drupal_set_message(invite_notifications_get_message($row->message_type, $row), 'status', FALSE);
     }
@@ -109,6 +111,16 @@ function invite_notifications_invite_accept($invite) {
   if (drupal_write_record('invite_notifications', $message) == SAVED_NEW) {
     $inviter = user_load($invite->uid);
     user_save($inviter, array('data' => array('notification_received' => TRUE)));
+
+    $invitee = user_load($invite->invitee);
+    user_save($invitee, array('data' => array('notification_received' => FALSE)));
+    db_update('invite_notifications')
+      ->fields(array(
+      'status' => 0,
+    ))
+      ->condition('iid', $invite->iid, '=')
+      ->execute();
+
   }
 }
 
@@ -123,7 +135,7 @@ function invite_notifications_entity_insert($invite, $type) {
   if (!empty($invite->invitee) && ($invite->status() == INVITE_VALID)) {
     $message = array(
       'iid' => $invite->iid,
-      'uid' => $invite->uid,
+      'uid' => $invite->invitee,
       'inviter' => $invite->uid,
       'invitee' => $invite->invitee,
       'message_type' => 'registered_user_notification',

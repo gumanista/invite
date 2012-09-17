@@ -169,6 +169,7 @@ function invite_update_7400() {
   // We unable move the data because invite_by_email should be installed.
   // So all data transfer will be moved
   variable_set('invite_version_updated', TRUE);
+  variable_set('invite_default_expiry_time', 30);
 
   drupal_set_message(t('Invite was successfully installed. You could migrate !link.', array('!link' => l('old invites', 'admin/config/people/invite/migrate'))));
 }

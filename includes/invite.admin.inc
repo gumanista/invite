@@ -462,6 +462,7 @@ function invite_migrate_process($values, &$context) {
     $context['sandbox']['max'] = $query->countQuery()->execute()->fetchField();
   }
   $limit = 20;
+  variable_set('invite_migration_in_progress', TRUE);
   $result = $query->range($context['sandbox']['progress'], $limit)->execute();
   foreach ($result as $record) {
     $invite_data = array(
@@ -485,6 +486,7 @@ function invite_migrate_process($values, &$context) {
 
     $context['sandbox']['progress']++;
   }
+  variable_del('invite_migration_in_progress');
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
