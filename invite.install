@@ -84,7 +84,7 @@ function invite_schema() {
   $schema['invite_type'] = array(
     'description' => 'Stores information about all defined invite types.',
     'fields' => array(
-      'id' => array(
+      'itid' => array(
         'type' => 'serial',
         'not null' => TRUE,
         'description' => 'Primary Key: Unique invite type ID.',
@@ -99,13 +99,6 @@ function invite_schema() {
         'description' => 'The human-readable name of this type.',
         'type' => 'varchar',
         'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'invite_sending_controller' => array(
-        'description' => 'Invite sending_controller.',
-        'type' => 'varchar',
-        'length' => 64,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -125,6 +118,37 @@ function invite_schema() {
     'primary key' => array('id'),
     'unique keys' => array(
       'type' => array('type'),
+    ),
+  );
+
+  $schema['invite_sending_controller'] = array(
+    'type' => array(
+      'description' => 'The machine-readable name of type.',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+    ),
+    'module' => array(
+      'description' => 'Module, which implements this controller.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ),
+    'name' => array(
+      'description' => 'The machine-readable name of this sending controller.',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+    ),
+    'unique keys' => array(
+      'invite_type_controller' => array('itid', 'name'),
+    ),
+    'foreign keys' => array(
+      'invite_type' => array(
+        'table' => 'invite_type',
+        'columns' => array('type' => 'type'),
+      ),
     ),
   );
 
