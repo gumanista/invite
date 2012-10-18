@@ -247,6 +247,8 @@ function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
       return user_access('withdraw invitations')
         || (user_access('edit own invite entities') && ($invite->invitee == $account->uid));
   }
+
+  return TRUE;
 }
 
 /**
@@ -254,6 +256,9 @@ function invite_access($op, $invite, $account = NULL, $entity_type = NULL) {
  *
  * @param Invite $invite
  *   The invitations to be withdrawn.
+ *
+ * @return bool
+ *   Is user have access or no.
  */
 function invite_withdraw_access($invite) {
   global $user;
@@ -386,8 +391,7 @@ function invite_by_code_load($reg_code) {
 /**
  * Loads Invite using information stored in session.
  *
- * @param string $reg_code
- * @return Invite
+ * @return bool|Invite
  */
 function invite_load_from_session() {
   if (isset($_SESSION[INVITE_SESSION_CODE])) {
@@ -423,12 +427,12 @@ function invite_load($iid, $reset = FALSE) {
 /**
  * Load multiple invites based on certain conditions.
  *
- * @param array $iids
+ * @param array|bool $iids
  * @param array $conditions
  * @param bool $reset
  * @return mixed
  */
-function invite_load_multiple($iids = array(), $conditions = array(), $reset = FALSE) {
+function invite_load_multiple($iids, $conditions = array(), $reset = FALSE) {
   return entity_load('invite', $iids, $conditions, $reset);
 }
 
@@ -497,18 +501,22 @@ function invite_metadata_entity_get_properties($entity, array $options, $name, $
   $invite = entity_metadata_wrapper('invite', $entity);
   switch ($name) {
     case 'invite_accept_link':
-      return url('invite/accept/' . $invite->reg_code->value(), array('absolute' => TRUE));
+      $result = url('invite/accept/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
     case 'invite_withdraw_link':
-      return url('invite/withdraw/' . $invite->reg_code->value(), array('absolute' => TRUE));
+      $result = url('invite/withdraw/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
     case 'invite_resend_link':
-      return url('invite/resend/' . $invite->reg_code->value(), array('absolute' => TRUE));
+      $result = url('invite/resend/' . $invite->reg_code->value(), array('absolute' => TRUE));
       break;
     case 'status':
-      return $entity->status(TRUE);
+      $result = $entity->status(TRUE);
       break;
+    default:
+      $result = '';
   }
+
+  return $result;
 }
 
 /**
@@ -568,7 +576,7 @@ function invite_type_delete_multiple($invite_type_ids) {
 }
 
 /**
- * Implementats hook_views_api().
+ * Implements hook_views_api().
  */
 function invite_views_api() {
   return array(
@@ -675,9 +683,9 @@ function invite_user_presave(&$edit, $account, $category) {
  *
  * @param Invite $invite
  *   An invite object.
- * @param $accout
+ * @param $account
  *   The user for whom the role is being determined.
- * @return
+ * @return array
  *   Array of target roles for an invited user.
  */
 function invite_target_roles($invite, $account) {

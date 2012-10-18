@@ -74,6 +74,9 @@ function invite_accept($invite) {
  *
  * @param Invite $invite
  *   An invitate object.
+ *
+ * @return Array
+ *   renderable array, representing a page.
  */
 function invite_resend($invite) {
   global $user;
@@ -85,6 +88,11 @@ function invite_resend($invite) {
   else {
     return MENU_ACCESS_DENIED;
   }
+
+  return array(
+    'message' => t('Invite was sucessfuly resended.'),
+    'invite' => entity_view('invite', array(entity_id('invite', $invite) => $invite), 'full'),
+  );
 }
 
 /**

@@ -218,6 +218,8 @@ class InviteType extends Entity {
 
   public $argument = array();
 
+  public $invite_sending_controller;
+
   public function __construct($values = array()) {
     parent::__construct($values, 'invite_type');
   }
@@ -230,7 +232,7 @@ class InviteType extends Entity {
 /**
  * Generates a unique tracking code.
  *
- * @return
+ * @return string
  *   An 10-digit unique tracking code.
  */
 function invite_generate_code() {

@@ -435,7 +435,7 @@ function invite_migrate_form_validate($form, &$form_state) {
 }
 
 /**
- * Implements sumit handler for migration.
+ * Implements submit handler for migration.
  *
  * @param $form
  * @param $form_state
