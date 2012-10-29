@@ -213,14 +213,49 @@ class InviteType extends Entity {
 
   public $argument = array();
 
-  public $invite_sending_controller;
+  public $invite_sending_controller = array();
 
   public function __construct($values = array()) {
     parent::__construct($values, 'invite_type');
+    $controllers = db_select('invite_sending_controller', 'isc')
+      ->fields('isc')
+      ->condition('type', array($this->type))
+      ->execute();
+    foreach ($controllers as $controller) {
+      $this->invite_sending_controller[$controller->name] = $controller->name;
+    }
   }
 
   function isLocked() {
     return isset($this->status) && empty($this->is_new) && (($this->status & ENTITY_IN_CODE) || ($this->status & ENTITY_FIXED));
+  }
+
+  public function save() {
+    parent::save();
+    $controllers = array();
+    // Remove old controller entries.
+    db_delete('invite_sending_controller')
+      ->condition('type', $this->type)
+      ->execute();
+    // Add controllers.
+    foreach ($this->invite_sending_controller as $controller_name) {
+      if (!in_array($controller_name, $controllers)) {
+        $controllers[] = $controller_name;
+        db_insert('invite_sending_controller')
+          ->fields(array(
+            'type' => $this->type,
+            'name' => $controller_name,
+          ))
+          ->execute();
+      }
+    }
+  }
+
+  public function delete() {
+    parent::delete();
+    db_delete('invite_sending_controller')
+      ->condition('type', $this->type)
+      ->execute();
   }
 }
 

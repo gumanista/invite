@@ -115,34 +115,36 @@ function invite_schema() {
         'not null' => TRUE,
       ),
     ) + entity_exportable_schema_fields(),
-    'primary key' => array('id'),
+    'primary key' => array('itid'),
     'unique keys' => array(
       'type' => array('type'),
     ),
   );
 
   $schema['invite_sending_controller'] = array(
-    'type' => array(
-      'description' => 'The machine-readable name of type.',
-      'type' => 'varchar',
-      'length' => 32,
-      'not null' => TRUE,
-    ),
-    'module' => array(
-      'description' => 'Module, which implements this controller.',
-      'type' => 'varchar',
-      'length' => 255,
-      'not null' => TRUE,
-      'default' => '',
-    ),
-    'name' => array(
-      'description' => 'The machine-readable name of this sending controller.',
-      'type' => 'varchar',
-      'length' => 32,
-      'not null' => TRUE,
+    'fields' => array(
+      'type' => array(
+        'description' => 'The machine-readable name of Invite Type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'module' => array(
+        'description' => 'Module, which implements this controller.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => 'The machine-readable name of this sending controller.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
     ),
     'unique keys' => array(
-      'invite_type_controller' => array('itid', 'name'),
+      'invite_type_controller' => array('type', 'name'),
     ),
     'foreign keys' => array(
       'invite_type' => array(
@@ -169,7 +171,7 @@ function invite_install() {
 function invite_uninstall() {
   // Set default expiry time 30 days
   variable_del('invite_default_expiry_time');
-  $variables = db_select('variable')
+  $variables = db_select('variable', 'v')
     ->fields('v')
     ->condition('name', 'invite_type_%', 'LIKE')
     ->execute();

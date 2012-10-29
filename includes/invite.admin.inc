@@ -25,7 +25,7 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
 
   if (empty($invite_sending_controllers)) {
     $form['message'] = array(
-      '#markup' => t('Sorry no Invitation Type plugins available in the system.'),
+      '#markup' => t('Sorry no Invitation Type modules available in the system.'),
     );
     return $form;
   }
@@ -53,10 +53,9 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
   );
 
   $form['invite_sending_controller'] = array(
-    '#title' => t('Invite type'),
-    '#type' => 'select',
-    '#default_value' => !empty($invite_type->invite_sending_controller) ? $invite_type->invite_sending_controller : NULL,
-    '#disabled' => !empty($invite_type->invite_sending_controller),
+    '#title' => t('Sending method'),
+    '#type' => 'checkboxes',
+    '#default_value' => $invite_type->invite_sending_controller,
     '#description' => t('Invitation processing plugin.'),
     '#options' => $invite_sending_controllers,
     '#required' => TRUE,
@@ -95,6 +94,11 @@ function invite_type_form($form, &$form_state, $invite_type, $op = 'edit') {
  */
 function invite_type_form_submit(&$form, &$form_state) {
   $invite_type = entity_ui_form_submit_build_entity($form, $form_state);
+  foreach ($form_state['values']['invite_sending_controller'] as $controller) {
+    if (!empty($controller)) {
+      $invite_type->invite_sending_controller[] = $controller;
+    }
+  }
   // Save and go back.
   invite_type_save($invite_type);
 

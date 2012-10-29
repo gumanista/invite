@@ -46,6 +46,11 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
   $form['invite_by_email'] = array(
     '#type' => 'container',
     '#title' => t('Message settings'),
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="invite_sending_controller[invite_by_email]"]' => array('checked' => FALSE),
+      )
+    ),
   );
 
   $form['invite_by_email']['use_default'] = array(
@@ -100,16 +105,16 @@ function invite_by_email_form_invite_type_form_alter(&$form, &$form_state, $invi
  * @param $form_state
  */
 function invite_by_email_form_invite_type_form_submit(&$form, &$form_state) {
-  if ($form_state['values']['invite_sending_controller'] == 'invite_by_email') {
-    if (empty($form['#invite_type'])) {
-      $invite_type = $form['#invite_type'];
-    }
-    else {
-      $invite_type = invite_get_types($form_state['values']['type']);
-    }
-    variable_set(_invite_by_email_variable_name('use_default', $invite_type), $form_state['values']['use_default']);
-    variable_set(_invite_by_email_variable_name('message_editable', $invite_type), $form_state['values']['message_editable']);
-  }
+//  if ($form_state['values']['invite_sending_controller'] == 'invite_by_email') {
+//    if (empty($form['#invite_type'])) {
+//      $invite_type = $form['#invite_type'];
+//    }
+//    else {
+//      $invite_type = invite_get_types($form_state['values']['type']);
+//    }
+//    variable_set(_invite_by_email_variable_name('use_default', $invite_type), $form_state['values']['use_default']);
+//    variable_set(_invite_by_email_variable_name('message_editable', $invite_type), $form_state['values']['message_editable']);
+//  }
 }
 
 /**
@@ -365,6 +370,9 @@ function invite_by_email_mail($key, &$message, $params) {
   $message['body'][] = token_replace($entity->field_invitation_email_body->value(), $token_data);
 }
 
+/**
+ * Implements hook_FORM_ID_alter.
+ */
 function invite_by_email_form_invite_form_alter(&$form, &$form_state, $form_id) {
   $invite = $form['#entity'];
   if (method_exists($invite, 'type_details') && $invite->type_details()->invite_sending_controller == 'invite_by_email') {

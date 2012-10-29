@@ -27,6 +27,17 @@ function invite_notifications_init() {
   }
 }
 
+/**
+ *
+ *
+ * @return array
+ */
+function invite_notifications_invite_sending_controller() {
+  return array(
+    'label' => t('In-site notification'),
+  );
+}
+
 function invite_notifications_get_message($message_type, $params) {
   $message = $params;
   $invitee = user_load($message->invitee);

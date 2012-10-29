@@ -47,7 +47,7 @@ function invite_entity_info() {
     'bundle of' => 'invite',
     'exportable' => TRUE,
     'entity keys' => array(
-      'id' => 'id',
+      'id' => 'itid',
       'name' => 'type',
       'label' => 'label',
     ),
@@ -537,12 +537,6 @@ function invite_type_load($invite_type_name) {
  */
 function invite_get_types($type_name = NULL) {
   $types = entity_load_multiple_by_name('invite_type', isset($type_name) ? array($type_name) : FALSE);
-  foreach ($types as &$type) {
-    $type += db_select('invite_sending_controller', 'isc')
-      ->fields('isc')
-      ->condition('type', array($type->name))
-      ->fetchAll();
-  }
   return isset($type_name) ? reset($types) : $types;
 }
 
@@ -553,7 +547,7 @@ function invite_get_types($type_name = NULL) {
  */
 function invite_type_save($invite_type) {
   entity_save('invite_type', $invite_type);
-  module_invoke_all('invite_type_save');
+  module_invoke_all('invite_type_save', $invite_type);
 }
 
 /**
